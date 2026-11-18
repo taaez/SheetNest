@@ -4,28 +4,28 @@
 
 모양이 제각각인 다각형 부품을 폭이 고정된 원판 위에 겹치지 않게 배치해 **사용 길이를 최소화**한다.
 
-배치 위치는 공통 Bottom-Left 디코더(후보점 + 공통 겹침 판정)로 고정하고,
-**부품을 어떤 순서·회전으로 놓을지 정하는 순서 탐색 알고리즘 3가지**를 비교한다.
+부품을 놓을 순서(면적 큰 순)와 위치 선택 규칙(Bottom-Left)은 고정하고,
+실행 시간의 대부분을 차지하는 **가능 위치 계산** 방법 3가지를 비교한다.
 
-1. 정렬 그리디 — 정렬 기준으로 한 번 배치
-2. 지역 탐색 또는 시뮬레이티드 어닐링 — 순서를 조금씩 바꿔 개선
-3. 유전 알고리즘 — 순서·회전 집단을 진화
+1. 삼각법(직접 판정) — 다각형 그대로, 선분 교차·점 포함 검사
+2. NFP(No-Fit Polygon) — 겹치게 되는 영역을 미리 계산해 점 하나로 판정
+3. 래스터 — 격자 비트맵으로 바꿔 비트 연산으로 판정
 
 ## 폴더 구조
 
 ```
 nesting/
   geometry.py        기본 기하 연산: 면적, 회전, 선분 교차, 점-다각형 판정, 정규화
-  collision.py       공통 겹침 판정 + 계산량 집계 (고정 층)
-  decoder.py         Bottom-Left 디코더: 순서 → 배치 (고정 층, 세 알고리즘이 공유)
+  collision.py       다각형 겹침 판정 (삼각법의 핵심, 검증기도 사용) + 계산량 집계
+  sequence.py        고정 배치 순서: 면적 큰 순 + 들어가는 첫 회전
   validate.py        해 검증기
   model.py           Instance / Solution 형식, 저장·불러오기, 형식 검사
   io/                변환기: sparrow JSON, ESICUP XML, DXF, SVG
 algorithms/
   baseline/          바운딩 박스 줄 쌓기 (검증·화면 개발용, 비교 대상 아님)
-  greedy/            1. 정렬 그리디 (구현 예정)
-  local_search/      2. 지역 탐색 또는 시뮬레이티드 어닐링 (구현 예정)
-  ga/                3. 유전 알고리즘 (구현 예정)
+  trig/              1. 삼각법(직접 판정) (구현 완료)
+  nfp/               2. NFP (구현 예정)
+  raster/            3. 래스터 (구현 예정)
 experiments/         selected.txt(실험 인스턴스 7개), 실험 설명
 web/                 웹 데모 (구조 미정)
 tools/
@@ -71,10 +71,9 @@ python tools/build_datasets.py --sparrow ../sparrow --esicup ../esicup-datasets
 ## 알고리즘 작성 규칙
 
 1. 시그니처: `nest(inst: Instance, *, seed=0, time_limit_s=None, **params) -> Solution`
-2. 알고리즘은 배치 순서 `[(item_id, rotation), ...]`만 정한다. 배치는 `nesting.decoder.Decoder`로 한다
-3. 평가는 `dec.length(seq)`, 결과는 `dec.to_solution(best_seq, 이름, t0, {...})`
-4. 시작 시 `collision.reset_stats()`, 난수는 `random.Random(seed)` 하나만
-5. `python tools/run.py <알고리즘> experiments/selected.txt`로 검증기 OK 확인
+2. 배치 순서는 `nesting.sequence.fixed_sequence(inst)`, 위치 선택은 Bottom-Left (x 최소, 같으면 y 최소)
+3. stats에 `time_place_ms`, `time_feasible_ms`와 방법별 계산량을 기록
+4. 결과는 `make_solution()`으로 만들고 `python tools/run.py <알고리즘> experiments/selected.txt`로 검증기 OK 확인
 
 자세한 규칙은 [docs/SPEC.md](docs/SPEC.md) 5절.
 
