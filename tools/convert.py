@@ -6,6 +6,7 @@
   python tools/convert.py parts.dxf --width 1200 -o parts.json                  # DXF
   python tools/convert.py parts.svg --unit mm --width 600 -o parts.json         # SVG
 """
+
 import argparse
 import json
 import sys
@@ -53,8 +54,11 @@ def main():
     errs = check_instance(inst)
     if errs:
         print("[경고] 형식 검사 실패:", *errs, sep="\n  ", file=sys.stderr)
-    print(f"{inst.name}: 부품 {len(inst.items)}종 / 총 {inst.total_quantity}개, 폭 {inst.sheet_width:g}, "
-          f"면적합 {inst.total_area:.4g}, 길이 하한 {inst.length_lower_bound:.4g}", file=sys.stderr)
+    print(
+        f"{inst.name}: 부품 {len(inst.items)}종 / 총 {inst.total_quantity}개, 폭 {inst.sheet_width:g}, "
+        f"면적합 {inst.total_area:.4g}, 길이 하한 {inst.length_lower_bound:.4g}",
+        file=sys.stderr,
+    )
     if a.output:
         inst.save(a.output)
     else:

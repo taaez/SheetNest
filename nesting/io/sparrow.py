@@ -10,6 +10,7 @@
   continuous_step 간격의 각도 목록으로 바꾸고 meta에 기록한다.
 - zones(품질 구역) 등 지원하지 않는 필드는 무시하고 meta에 기록한다.
 """
+
 from __future__ import annotations
 
 import json
@@ -39,13 +40,21 @@ def load_sparrow(path: str | Path, continuous_step: float = 90.0) -> Instance:
         for k in e:
             if k not in ("id", "demand", "orientation", "shape", "dxf"):
                 ignored.add(k)
-        items.append(Item(id=int(e["id"]), polygon=g.normalize(shape["data"]),
-                          quantity=int(e.get("demand", 1)), rotations=angles))
+        items.append(
+            Item(
+                id=int(e["id"]), polygon=g.normalize(shape["data"]), quantity=int(e.get("demand", 1)), rotations=angles
+            )
+        )
     meta = {"converted_from": "sparrow-json"}
     if continuous:
         meta["continuous_rotation_items"] = continuous
         meta["continuous_rotation_step"] = continuous_step
     if ignored:
         meta["ignored_fields"] = sorted(ignored)
-    return Instance(name=d.get("name", path.stem), sheet_width=float(d["strip_height"]), items=items,
-                    source=f"sparrow:{path.name}", meta=meta)
+    return Instance(
+        name=d.get("name", path.stem),
+        sheet_width=float(d["strip_height"]),
+        items=items,
+        source=f"sparrow:{path.name}",
+        meta=meta,
+    )

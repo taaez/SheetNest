@@ -5,13 +5,14 @@
 좌표계: x는 원판 길이 방향(최소화 대상), y는 폭 방향, y축은 위쪽이 +.
 다각형: [[x, y], ...] 꼭짓점 목록, 마지막 점이 첫 점과 같지 않음(닫지 않음).
 """
+
 from __future__ import annotations
 
 import math
-from typing import List, Sequence, Tuple
+from collections.abc import Sequence
 
-Point = Tuple[float, float]
-Polygon = List[List[float]]
+Point = tuple[float, float]
+Polygon = list[list[float]]
 
 EPS = 1e-9
 
@@ -31,7 +32,7 @@ def area(poly: Sequence[Sequence[float]]) -> float:
     return abs(signed_area(poly))
 
 
-def bbox(poly: Sequence[Sequence[float]]) -> Tuple[float, float, float, float]:
+def bbox(poly: Sequence[Sequence[float]]) -> tuple[float, float, float, float]:
     xs = [p[0] for p in poly]
     ys = [p[1] for p in poly]
     return min(xs), min(ys), max(xs), max(ys)
@@ -111,23 +112,26 @@ def normalize(poly: Sequence[Sequence[float]], tol: float = 1e-9) -> Polygon:
 
 
 def on_segment(p: Sequence[float], a: Sequence[float], b: Sequence[float], eps: float = EPS) -> bool:
-    return (abs(_cross(a, b, p)) <= eps
-            and min(a[0], b[0]) - eps <= p[0] <= max(a[0], b[0]) + eps
-            and min(a[1], b[1]) - eps <= p[1] <= max(a[1], b[1]) + eps)
+    return (
+        abs(_cross(a, b, p)) <= eps
+        and min(a[0], b[0]) - eps <= p[0] <= max(a[0], b[0]) + eps
+        and min(a[1], b[1]) - eps <= p[1] <= max(a[1], b[1]) + eps
+    )
 
 
-def segments_intersect(a: Sequence[float], b: Sequence[float],
-                       c: Sequence[float], d: Sequence[float], eps: float = EPS) -> bool:
+def segments_intersect(
+    a: Sequence[float], b: Sequence[float], c: Sequence[float], d: Sequence[float], eps: float = EPS
+) -> bool:
     """선분 ab와 cd가 만나는지(접촉 포함). 교안 06-01 '두 선분의 상대위치'."""
     d1 = _cross(c, d, a)
     d2 = _cross(c, d, b)
     d3 = _cross(a, b, c)
     d4 = _cross(a, b, d)
-    if ((d1 > eps and d2 < -eps) or (d1 < -eps and d2 > eps)) and \
-       ((d3 > eps and d4 < -eps) or (d3 < -eps and d4 > eps)):
+    if ((d1 > eps and d2 < -eps) or (d1 < -eps and d2 > eps)) and (
+        (d3 > eps and d4 < -eps) or (d3 < -eps and d4 > eps)
+    ):
         return True
-    return (on_segment(a, c, d, eps) or on_segment(b, c, d, eps)
-            or on_segment(c, a, b, eps) or on_segment(d, a, b, eps))
+    return on_segment(a, c, d, eps) or on_segment(b, c, d, eps) or on_segment(c, a, b, eps) or on_segment(d, a, b, eps)
 
 
 def is_simple(poly: Sequence[Sequence[float]]) -> bool:
@@ -182,7 +186,9 @@ def same_shape(p: Sequence[Sequence[float]], q: Sequence[Sequence[float]], tol: 
         return False
     n = len(p)
     for shift in range(n):
-        if all(abs(p[i][0] - q[(i + shift) % n][0]) <= tol and abs(p[i][1] - q[(i + shift) % n][1]) <= tol
-               for i in range(n)):
+        if all(
+            abs(p[i][0] - q[(i + shift) % n][0]) <= tol and abs(p[i][1] - q[(i + shift) % n][1]) <= tol
+            for i in range(n)
+        ):
             return True
     return False

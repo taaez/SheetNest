@@ -1,21 +1,25 @@
-from .sparrow import load_sparrow
 from .esicup import load_esicup
+from .sparrow import load_sparrow
 
 
 def load_any(path, **kw):
     """확장자로 형식을 판별해 Instance로 읽는다."""
-    from pathlib import Path
-    from ..model import Instance
     import json
+    from pathlib import Path
+
+    from ..model import Instance
+
     p = Path(path)
     ext = p.suffix.lower()
     if ext == ".xml":
         return load_esicup(p)
     if ext == ".dxf":
         from .dxf_reader import load_dxf
+
         return load_dxf(p, **kw)
     if ext == ".svg":
         from .svg_reader import load_svg
+
         return load_svg(p, **kw)
     if ext == ".json":
         d = json.loads(p.read_text(encoding="utf-8"))

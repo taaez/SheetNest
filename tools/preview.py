@@ -4,6 +4,7 @@ solution JSON을 함께 주면 원판 위 배치 결과를 그린다.
   python tools/preview.py data/instances/sparrow/fu.json -o fu_parts.svg
   python tools/preview.py inst.json --solution sol.json -o layout.svg
 """
+
 import argparse
 import math
 import sys
@@ -25,9 +26,11 @@ def parts_svg(inst: Instance, cell=140, cols=6):
     n = len(inst.items)
     rows = math.ceil(n / cols)
     W, H = cols * cell, rows * cell + 30
-    out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" font-family="sans-serif">',
-           f'<text x="8" y="20" font-size="14">{inst.name}: {n} types / {inst.total_quantity} pieces, '
-           f'width {inst.sheet_width:g} (each cell scaled separately)</text>']
+    out = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" font-family="sans-serif">',
+        f'<text x="8" y="20" font-size="14">{inst.name}: {n} types / {inst.total_quantity} pieces, '
+        f"width {inst.sheet_width:g} (each cell scaled separately)</text>",
+    ]
     for k, it in enumerate(inst.items):
         cx, cy = (k % cols) * cell, (k // cols) * cell + 30
         _, _, w, h = g.bbox(it.polygon)
@@ -43,15 +46,19 @@ def layout_svg(inst: Instance, sol: Solution, px=900):
     s = px / max(sol.length, 1e-9)
     W, H = px + 20, inst.sheet_width * s + 50
     by_id = {it.id: it for it in inst.items}
-    out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" font-family="sans-serif">',
-           f'<text x="10" y="18" font-size="13">{sol.algorithm}: length {sol.length:.3f}, '
-           f'utilization {sol.utilization * 100:.1f}%</text>',
-           f'<rect x="10" y="30" width="{sol.length * s:.2f}" height="{inst.sheet_width * s:.2f}" '
-           f'fill="none" stroke="#555" stroke-dasharray="4 3"/>']
+    out = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" font-family="sans-serif">',
+        f'<text x="10" y="18" font-size="13">{sol.algorithm}: length {sol.length:.3f}, '
+        f"utilization {sol.utilization * 100:.1f}%</text>",
+        f'<rect x="10" y="30" width="{sol.length * s:.2f}" height="{inst.sheet_width * s:.2f}" '
+        f'fill="none" stroke="#555" stroke-dasharray="4 3"/>',
+    ]
     for p in sol.placements:
         poly = g.transform(by_id[p.item].polygon, p.rotation, p.x, p.y)
         pts = " ".join(f"{10 + x * s:.2f},{30 + (inst.sheet_width - y) * s:.2f}" for x, y in poly)
-        out.append(f'<polygon points="{pts}" fill="{COLORS[p.item % len(COLORS)]}" stroke="#1F3864" stroke-width="0.8"/>')
+        out.append(
+            f'<polygon points="{pts}" fill="{COLORS[p.item % len(COLORS)]}" stroke="#1F3864" stroke-width="0.8"/>'
+        )
     out.append("</svg>")
     return "\n".join(out)
 

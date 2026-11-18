@@ -1,5 +1,5 @@
 """pytest -q 로 실행."""
-import json
+
 import math
 import subprocess
 import sys
@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from nesting import geometry as g  # noqa: E402
-from nesting.model import Instance, Placement, check_instance, make_solution, Solution  # noqa: E402
 from nesting.io import load_any  # noqa: E402
+from nesting.model import Instance, Placement, Solution, check_instance, make_solution  # noqa: E402
 
 EX = ROOT / "examples"
 DATA = ROOT / "data" / "instances"
@@ -63,8 +63,8 @@ def _check_sample(inst: Instance, width):
     assert len(inst.items) == 5
     assert inst.total_quantity == 6
     areas = sorted(round(it.area) for it in inst.items)
-    stadium = 80 * 30 + math.pi * 15 ** 2
-    circle = math.pi * 25 ** 2
+    stadium = 80 * 30 + math.pi * 15**2
+    circle = math.pi * 25**2
     expect = sorted([100 * 60, 80 * 20 + 20 * 50, round(stadium), round(circle), 120 * 80])
     for a, e in zip(areas, expect):
         assert a == pytest.approx(e, rel=0.01)
@@ -103,11 +103,16 @@ def test_all_converted_valid():
 
 # ---------- solution ----------
 def test_solution_roundtrip(tmp_path):
-    inst = Instance.from_dict({"format": "nesting-instance/1", "name": "t", "sheet": {"width": 10},
-                               "items": [{"id": 0, "quantity": 2, "rotations": [0, 90],
-                                          "polygon": [[0, 0], [4, 0], [4, 2], [0, 2]]}]})
+    inst = Instance.from_dict(
+        {
+            "format": "nesting-instance/1",
+            "name": "t",
+            "sheet": {"width": 10},
+            "items": [{"id": 0, "quantity": 2, "rotations": [0, 90], "polygon": [[0, 0], [4, 0], [4, 2], [0, 2]]}],
+        }
+    )
     sol = make_solution(inst, "manual", [Placement(0, 0, 0, 0, 0), Placement(0, 1, 90, 6, 0)], 1.0)
-    assert sol.length == pytest.approx(6)        # 90도 회전 후 x 범위 [4, 6]
+    assert sol.length == pytest.approx(6)  # 90도 회전 후 x 범위 [4, 6]
     assert sol.utilization == pytest.approx(16 / 60)
     sol.save(tmp_path / "s.json")
     assert Solution.load(tmp_path / "s.json").placements[1].rotation == 90

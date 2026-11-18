@@ -7,6 +7,7 @@
 - coordinatesOrigin이 up-left(화면 좌표, y 아래로 +)이면 y를 뒤집어 수학 좌표로 바꾼다.
   (모든 부품과 원판을 함께 뒤집으므로 문제 자체는 동일하다)
 """
+
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
@@ -54,12 +55,27 @@ def load_esicup(path: str | Path) -> Instance:
         pts = g.translate(pts, ox, -oy if flip else oy)
         orient = piece.find("n:orientation", NS)
         angles = [float(e.get("angle")) for e in orient.findall("n:enumeration", NS)] if orient is not None else [0.0]
-        items.append(Item(id=idx, name=piece.get("id"), polygon=g.normalize(pts),
-                          quantity=int(piece.get("quantity", 1)), rotations=angles or [0.0]))
-    meta = {"converted_from": "esicup-xml", "coordinates_origin": origin,
-            "description": (root.findtext("n:description", default="", namespaces=NS) or "").strip()}
+        items.append(
+            Item(
+                id=idx,
+                name=piece.get("id"),
+                polygon=g.normalize(pts),
+                quantity=int(piece.get("quantity", 1)),
+                rotations=angles or [0.0],
+            )
+        )
+    meta = {
+        "converted_from": "esicup-xml",
+        "coordinates_origin": origin,
+        "description": (root.findtext("n:description", default="", namespaces=NS) or "").strip(),
+    }
     if warnings:
         meta["warnings"] = warnings
     name = (root.findtext("n:name", default="", namespaces=NS) or path.stem).strip()
-    return Instance(name=path.stem if path.stem.lower() != name.lower() else name.lower(),
-                    sheet_width=width, items=items, source=f"esicup:{path.parent.name}/{path.name}", meta=meta)
+    return Instance(
+        name=path.stem if path.stem.lower() != name.lower() else name.lower(),
+        sheet_width=width,
+        items=items,
+        source=f"esicup:{path.parent.name}/{path.name}",
+        meta=meta,
+    )

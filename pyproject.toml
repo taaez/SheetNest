@@ -1,0 +1,29 @@
+[project]
+name = "sheetnest"
+version = "0.1.0"
+description = "판재 절단 배치(2D irregular nesting) 알고리즘 비교 — 동국대 알고리즘 4조"
+requires-python = ">=3.11,<3.12"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["data"]
+
+[tool.ruff.lint]
+# E/W: 기본 스타일, F: 실수(미사용 변수 등), I: import 정렬, B: 흔한 버그 패턴, UP: 최신 문법
+select = ["E", "W", "F", "I", "B", "UP"]
+ignore = [
+  "E501",   # 줄 길이는 formatter에 맡김 (한글 주석 고려)
+  "E402",   # tools/*.py는 sys.path 설정 후 import
+  "B905",   # zip(strict=) 강제하지 않음
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

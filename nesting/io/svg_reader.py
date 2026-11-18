@@ -6,22 +6,23 @@
 - svgelements는 길이를 px(96dpi)로 계산한다. unit="mm"이면 mm로 환산한다.
 - id 또는 class가 sheet_id인 요소(사각형)가 있으면 그 높이를 원판 폭으로 쓴다.
 """
+
 from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import List, Optional
 
-from svgelements import SVG, Shape, Path as SPath, Move, Close, Line
+from svgelements import SVG, Close, Line, Move, Shape
+from svgelements import Path as SPath
 
-from ..model import Instance
 from .. import geometry as g
+from ..model import Instance
 from .common import chain_segments, loops_to_items
 
 PX_PER = {"px": 1.0, "mm": 96 / 25.4, "cm": 96 / 2.54, "in": 96.0}
 
 
-def _sample(seg, tol: float) -> List[List[float]]:
+def _sample(seg, tol: float) -> list[list[float]]:
     """세그먼트 끝점까지의 점들(시작점 제외)."""
     if isinstance(seg, (Line, Close)):
         return [[seg.end.x, seg.end.y]]
@@ -40,7 +41,7 @@ def _sample(seg, tol: float) -> List[List[float]]:
 def _subpath_loops(shape_path: SPath, tol: float, join_tol: float):
     loops, segments = [], []
     for sub in shape_path.as_subpaths():
-        pts: List[List[float]] = []
+        pts: list[list[float]] = []
         closed = False
         for seg in sub:
             if isinstance(seg, Move):
@@ -58,9 +59,16 @@ def _subpath_loops(shape_path: SPath, tol: float, join_tol: float):
     return loops, segments
 
 
-def load_svg(path: str | Path, width: Optional[float] = None, unit: str = "mm", sheet_id: str = "sheet",
-             rotations: Optional[List[float]] = None, merge_identical: bool = True,
-             flatten_tol: float = 0.25, join_tol: float = 1e-3) -> Instance:
+def load_svg(
+    path: str | Path,
+    width: float | None = None,
+    unit: str = "mm",
+    sheet_id: str = "sheet",
+    rotations: list[float] | None = None,
+    merge_identical: bool = True,
+    flatten_tol: float = 0.25,
+    join_tol: float = 1e-3,
+) -> Instance:
     path = Path(path)
     scale = 1.0 / PX_PER[unit]
     svg = SVG.parse(str(path), reify=True)
@@ -89,8 +97,13 @@ def load_svg(path: str | Path, width: Optional[float] = None, unit: str = "mm", 
             raise ValueError(f"원판 폭을 알 수 없음: width 인자를 주거나 id='{sheet_id}'인 사각형을 그려 두세요")
         _, miny, _, maxy = g.bbox(conv(max(sheet_loops, key=g.area)))
         width = maxy - miny
-    items, report = loops_to_items(loops, rotations or [0.0, 90.0, 180.0, 270.0], merge_identical,
-                                   tol=join_tol * scale if join_tol * scale > 1e-9 else 1e-6)
+    items, report = loops_to_items(
+        loops,
+        rotations or [0.0, 90.0, 180.0, 270.0],
+        merge_identical,
+        tol=join_tol * scale if join_tol * scale > 1e-9 else 1e-6,
+    )
     meta = {"converted_from": "svg", "flatten_tol_px": flatten_tol, "open_chains_dropped": open_chains, **report}
-    return Instance(name=path.stem, sheet_width=float(width), items=items, unit=unit,
-                    source=f"svg:{path.name}", meta=meta)
+    return Instance(
+        name=path.stem, sheet_width=float(width), items=items, unit=unit, source=f"svg:{path.name}", meta=meta
+    )

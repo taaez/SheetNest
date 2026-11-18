@@ -10,6 +10,7 @@
   5) 구멍 뚫린 판 (바깥 120x80 + 안쪽 원) → 구멍 제외 확인
   6) 원판 사각형 (DXF: SHEET 레이어 1000x500, SVG: id="sheet")
 """
+
 from pathlib import Path
 
 import ezdxf

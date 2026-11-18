@@ -7,10 +7,10 @@
 - 다른 루프 안의 루프는 구멍으로 보고 제외(v1 미지원, meta에 개수 기록).
 - 원판 폭은 도면에 없으므로 인자로 받거나, sheet_layer 레이어의 사각형 높이로 정한다.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
 
 import ezdxf
 from ezdxf import path as ezpath
@@ -24,9 +24,16 @@ _INSUNITS = {0: None, 1: "in", 2: "ft", 4: "mm", 5: "cm", 6: "m"}
 _SUPPORTED = {"LWPOLYLINE", "POLYLINE", "LINE", "ARC", "CIRCLE", "ELLIPSE", "SPLINE"}
 
 
-def load_dxf(path: str | Path, width: Optional[float] = None, sheet_layer: Optional[str] = None,
-             rotations: Optional[List[float]] = None, merge_identical: bool = True,
-             flatten_tol: float = 0.1, join_tol: float = 1e-3, layers: Optional[List[str]] = None) -> Instance:
+def load_dxf(
+    path: str | Path,
+    width: float | None = None,
+    sheet_layer: str | None = None,
+    rotations: list[float] | None = None,
+    merge_identical: bool = True,
+    flatten_tol: float = 0.1,
+    join_tol: float = 1e-3,
+    layers: list[str] | None = None,
+) -> Instance:
     path = Path(path)
     doc = ezdxf.readfile(str(path))
     msp = doc.modelspace()
@@ -64,13 +71,18 @@ def load_dxf(path: str | Path, width: Optional[float] = None, sheet_layer: Optio
         _, miny, _, maxy = g.bbox(max(sheet_loops, key=g.area))
         width = maxy - miny
 
-    items, report = loops_to_items(loops, rotations or [0.0, 90.0, 180.0, 270.0], merge_identical,
-                                   tol=join_tol)
+    items, report = loops_to_items(loops, rotations or [0.0, 90.0, 180.0, 270.0], merge_identical, tol=join_tol)
     unit = _INSUNITS.get(doc.header.get("$INSUNITS", 0))
-    meta = {"converted_from": "dxf", "flatten_tol": flatten_tol, "open_chains_dropped": open_chains,
-            "skipped_entities": skipped, **report}
-    return Instance(name=path.stem, sheet_width=float(width), items=items, unit=unit,
-                    source=f"dxf:{path.name}", meta=meta)
+    meta = {
+        "converted_from": "dxf",
+        "flatten_tol": flatten_tol,
+        "open_chains_dropped": open_chains,
+        "skipped_entities": skipped,
+        **report,
+    }
+    return Instance(
+        name=path.stem, sheet_width=float(width), items=items, unit=unit, source=f"dxf:{path.name}", meta=meta
+    )
 
 
 def _close(a, b, tol):

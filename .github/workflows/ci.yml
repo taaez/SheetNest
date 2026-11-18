@@ -1,0 +1,28 @@
+name: CI
+
+# 모든 브랜치 push와 PR에서 실행 (팀원별 브랜치에서도 바로 확인 가능)
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+      - name: 코드 검사 (ruff check)
+        run: ruff check .
+      - name: 형식 검사 (ruff format --check)
+        run: ruff format --check .
+      - name: 샘플 도면 생성
+        run: python examples/make_examples.py
+      - name: 테스트 (pytest)
+        run: pytest
+      - name: 기준선 배치 + 검증 (선정 인스턴스 7개)
+        run: python tools/run.py baseline experiments/selected.txt

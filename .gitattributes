@@ -1,0 +1,7 @@
+# Windows/macOS 팀원 간 줄바꿈 차이로 생기는 불필요한 변경 방지
+* text=auto eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.dxf binary
+*.png binary
+*.pdf binary

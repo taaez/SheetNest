@@ -9,27 +9,37 @@ Bottom-Left 그리디, No-Fit Polygon 배치, 유전 알고리즘 세 가지를 
 
 ```
 nesting/
-  geometry.py        기하 코어: 면적, 회전, 선분 교차, 점-다각형 판정, 정규화 (A)
-  model.py           Instance / Solution 형식, 저장·불러오기, 형식 검사 (A)
-  io/                변환기: sparrow JSON, ESICUP XML, DXF, SVG (A)
-algorithms/          bl_ga/ (B), nfp/ (C)            ← 앞으로 추가
-web/, experiments/   웹 데모와 실험 자동화 (D)        ← 앞으로 추가
+  geometry.py        기본 기하 연산: 면적, 회전, 선분 교차, 점-다각형 판정, 정규화
+  collision.py       공통 겹침 판정 + 계산량 집계 (모든 알고리즘이 이것만 사용)
+  validate.py        해 검증기
+  model.py           Instance / Solution 형식, 저장·불러오기, 형식 검사
+  io/                변환기: sparrow JSON, ESICUP XML, DXF, SVG
+algorithms/
+  baseline/          바운딩 박스 줄 쌓기 (검증·화면 개발용, 비교 대상 아님)
+  bl/ nfp/ ga/       비교할 세 알고리즘 (구현 예정)
+experiments/         selected.txt(실험 인스턴스 7개), 실험 설명
+web/                 웹 데모 (구조 미정)
 tools/
+  run.py             알고리즘 실행 + 검증 + 저장
+  validate.py        solution 검증
   convert.py         파일 1개 → 공통 instance JSON
   build_datasets.py  sparrow·ESICUP 저장소 일괄 변환 + 교차 검증
   preview.py         instance/solution을 SVG로 그려 확인
 data/instances/      변환된 벤치마크 59개 + index.csv(요약표)
-docs/SPEC.md         공통 입출력 형식 (반드시 읽기)
-examples/            DXF/SVG 샘플 도면 생성기
-tests/               pytest
+docs/SPEC.md         공통 입출력 형식·겹침 판정·검증 규칙 (반드시 읽기)
+CONTRIBUTING.md      환경 설정, 브랜치·커밋 규칙
 ```
 
 ## 시작하기
 
+Python 3.11 기준. 자세한 내용은 [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python examples/make_examples.py
-pytest -q
+pytest
+python tools/run.py baseline experiments/selected.txt
 ```
 
 ## 자주 쓰는 명령
@@ -52,14 +62,15 @@ python tools/build_datasets.py --sparrow ../sparrow --esicup ../esicup-datasets
 ## 알고리즘 작성 규칙
 
 1. 시그니처: `nest(inst: Instance, *, seed=0, time_limit_s=None, **params) -> Solution`
-2. 겹침 판정은 `nesting/geometry.py`의 공통 함수만 사용 (각자 구현 금지)
-3. 결과는 `nesting.model.make_solution()`으로 만들고, `stats.overlap_checks`를 꼭 기록
+2. 겹침 판정은 `nesting/collision.py`의 `overlap()`만 사용 (각자 구현 금지)
+3. 시작 시 `collision.reset_stats()`, 결과는 `make_solution()`으로 만들고 `collision.get_stats()`를 stats에 기록
 4. 시간은 배치 결정 단계만 측정
+5. `python tools/run.py <알고리즘> experiments/selected.txt`로 검증기 OK 확인
 
 ## 데이터
 
 `data/instances/index.csv`에 인스턴스별 부품 종류 수, 총 부품 수, 오목 부품 종류 수, 폭, 면적 합,
-길이 하한(면적 합 ÷ 폭)이 정리되어 있다. 처음에는 `fu`(볼록 12개) → `jakobs1` → `shirts` 순으로 테스트하는 것을 권장한다.
+길이 하한(면적 합 ÷ 폭)이 정리되어 있다. 실험용 7개는 `experiments/selected.txt`와 `experiments/README.md` 참고.
 
 출처
 - ESICUP datasets: https://github.com/ESICUP/datasets
