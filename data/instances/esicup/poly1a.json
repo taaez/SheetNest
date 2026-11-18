@@ -1,0 +1,235 @@
+{
+  "format": "nesting-instance/1",
+  "name": "poly1a",
+  "unit": null,
+  "source": "esicup:poly/poly1a.xml",
+  "sheet": {
+    "width": 40.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [8.0, 0.0],
+        [10.0, 3.0],
+        [0.0, 5.0],
+        [4.0, 1.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [5.0, 0.0],
+        [7.0, 7.0],
+        [0.0, 7.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [4.0, 0.0],
+        [7.0, 3.0],
+        [3.0, 5.0],
+        [0.0, 4.0],
+        [1.0, 2.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [7.0, 3.0],
+        [6.0, 10.0],
+        [2.0, 7.0]
+      ],
+      "name": "piece3"
+    },
+    {
+      "id": 4,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [5.0, 0.0],
+        [12.0, 2.0],
+        [13.0, 4.0],
+        [10.0, 6.0],
+        [0.0, 7.0],
+        [1.0, 2.0]
+      ],
+      "name": "piece4"
+    },
+    {
+      "id": 5,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [4.0, 0.0],
+        [5.0, 4.0],
+        [0.0, 2.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece5"
+    },
+    {
+      "id": 6,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [6.0, 0.0],
+        [4.0, 7.0],
+        [0.0, 3.0]
+      ],
+      "name": "piece6"
+    },
+    {
+      "id": 7,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [2.0, 0.0],
+        [4.0, 2.0],
+        [2.0, 9.0],
+        [0.0, 5.0],
+        [1.0, 3.0]
+      ],
+      "name": "piece7"
+    },
+    {
+      "id": 8,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [3.0, 0.0],
+        [8.0, 5.0],
+        [6.0, 7.0],
+        [0.0, 7.0]
+      ],
+      "name": "piece8"
+    },
+    {
+      "id": 9,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [3.0, 0.0],
+        [11.0, 4.0],
+        [11.0, 7.0],
+        [3.0, 7.0],
+        [0.0, 2.0]
+      ],
+      "name": "piece9"
+    },
+    {
+      "id": 10,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [7.0, 0.0],
+        [4.0, 3.0],
+        [8.0, 6.0],
+        [1.0, 6.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece10"
+    },
+    {
+      "id": 11,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [5.0, 1.0],
+        [3.0, 3.0],
+        [7.0, 5.0],
+        [9.0, 7.0],
+        [6.0, 6.0],
+        [2.0, 8.0]
+      ],
+      "name": "piece11"
+    },
+    {
+      "id": 12,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [4.0, 4.0],
+        [9.0, 6.0],
+        [3.0, 6.0]
+      ],
+      "name": "piece12"
+    },
+    {
+      "id": 13,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [9.0, 0.0],
+        [10.0, 4.0],
+        [0.0, 4.0],
+        [2.0, 1.0],
+        [4.0, 2.0]
+      ],
+      "name": "piece13"
+    },
+    {
+      "id": 14,
+      "quantity": 1,
+      "rotations": [
+        0.0
+      ],
+      "polygon": [
+        [2.0, 0.0],
+        [8.0, 1.0],
+        [7.0, 3.0],
+        [5.0, 5.0],
+        [0.0, 2.0]
+      ],
+      "name": "piece14"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Artificially created data set, coordinates stated in Hopper, Eva, \"Two-dimensional Packing utilising Evolutionary Algorithms and other Meta-Heuristic Methods\", PhD Thesis, Cardiff University, School of Engineering, 2000."
+  }
+}

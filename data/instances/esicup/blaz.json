@@ -1,0 +1,116 @@
+{
+  "format": "nesting-instance/1",
+  "name": "blaz",
+  "unit": null,
+  "source": "esicup:blaz/blaz.xml",
+  "sheet": {
+    "width": 15.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [4.0, 1.0],
+        [4.0, 4.0],
+        [2.0, 5.0],
+        [0.0, 4.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [4.0, 0.0],
+        [4.0, 1.0],
+        [3.0, 3.0],
+        [4.0, 5.0],
+        [1.0, 5.0],
+        [0.0, 4.0],
+        [0.0, 2.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [1.0, 0.0],
+        [3.0, 0.0],
+        [4.0, 1.0],
+        [4.0, 3.0],
+        [3.0, 4.0],
+        [1.0, 4.0],
+        [0.0, 3.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [2.0, 1.0],
+        [4.0, 0.0],
+        [3.0, 3.0],
+        [4.0, 5.0],
+        [2.0, 4.0],
+        [0.0, 5.0],
+        [1.0, 2.0]
+      ],
+      "name": "piece3"
+    },
+    {
+      "id": 4,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [4.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 5.0],
+        [0.0, 5.0],
+        [0.0, 4.0],
+        [2.0, 3.0],
+        [3.0, 2.0]
+      ],
+      "name": "piece4"
+    },
+    {
+      "id": 5,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [4.0, 0.0],
+        [2.0, 3.0]
+      ],
+      "name": "piece5"
+    },
+    {
+      "id": 6,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 2.0],
+        [0.0, 2.0]
+      ],
+      "name": "piece6"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Artificially created data set, based in Blazewicz J., Hawryluk P. and Walkowiak R., 1993, \"Using a tabu search approach for solving the two-dimensional irregular cutting problem\", Annals of Operations Research 41, 313-327, coordinates stated in Oliveira J. F., Gomes A. M. and Ferreira S., 2000, \"A new constructive algorithm for nesting problems\", OR Spectrum 22 (2), 263-284."
+  }
+}

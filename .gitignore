@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.DS_Store
+.idea/
+.vscode/
+# 생성물
+examples/sample_parts.dxf
+examples/sample_parts.svg
+results/
+*.log

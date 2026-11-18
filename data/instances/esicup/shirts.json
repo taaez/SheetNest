@@ -1,0 +1,133 @@
+{
+  "format": "nesting-instance/1",
+  "name": "shirts",
+  "unit": null,
+  "source": "esicup:shirts/shirts.xml",
+  "sheet": {
+    "width": 40.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [9.0, 2.0],
+        [9.0, 6.0],
+        [2.0, 7.0],
+        [1.0, 5.0],
+        [0.0, 4.0],
+        [1.0, 3.0],
+        [1.0, 2.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [4.0, 0.0],
+        [7.0, 1.0],
+        [11.0, 0.0],
+        [12.0, 1.0],
+        [12.0, 3.0],
+        [13.0, 4.0],
+        [12.0, 6.0],
+        [1.0, 6.0],
+        [0.0, 3.0],
+        [1.0, 1.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [11.0, 0.0],
+        [12.0, 4.0],
+        [11.0, 9.0],
+        [8.0, 8.0],
+        [5.0, 8.0],
+        [3.0, 9.0],
+        [3.0, 8.0],
+        [0.0, 8.0],
+        [0.0, 1.0],
+        [7.0, 1.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 15,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [3.0, 0.0],
+        [4.0, 1.0],
+        [4.0, 3.0],
+        [0.0, 3.0]
+      ],
+      "name": "piece3"
+    },
+    {
+      "id": 4,
+      "quantity": 15,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [1.0, 0.0],
+        [7.0, 0.0],
+        [8.0, 1.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece4"
+    },
+    {
+      "id": 5,
+      "quantity": 15,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [4.0, 0.0],
+        [4.0, 1.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece5"
+    },
+    {
+      "id": 6,
+      "quantity": 15,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [3.0, 0.0],
+        [3.0, 1.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece6"
+    },
+    {
+      "id": 7,
+      "quantity": 15,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [3.0, 0.0],
+        [4.0, 1.0],
+        [5.0, 1.0],
+        [7.0, 0.0],
+        [9.0, 0.0],
+        [9.0, 2.0],
+        [1.0, 2.0]
+      ],
+      "name": "piece7"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Data set from the textile industry, instance initially used in Dowsland K. A., Dowsland W. B. and Bennell J. A., 1998, \"Jostling for position: local improvement for irregular cutting patterns\", Journal of the Operational Research Society 49, 647-658, coordinates stated in Oliveira J. F., Gomes A. M. and Ferreira S., 2000, \"A new constructive algorithm for nesting problems\", OR Spectrum 22 (2), 263-284."
+  }
+}

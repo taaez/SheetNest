@@ -1,0 +1,238 @@
+{
+  "format": "nesting-instance/1",
+  "name": "trousers",
+  "unit": null,
+  "source": "esicup:trousers/trousers.xml",
+  "sheet": {
+    "width": 79.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [4.0, 0.0],
+        [59.0, 0.0],
+        [59.0, 11.0],
+        [33.0, 12.0],
+        [24.0, 13.0],
+        [14.0, 16.0],
+        [12.0, 14.0],
+        [0.0, 13.0],
+        [0.0, 8.0],
+        [2.0, 8.0],
+        [4.0, 5.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [56.0, 0.0],
+        [56.0, 16.0],
+        [47.0, 19.0],
+        [41.0, 22.0],
+        [37.0, 20.0],
+        [27.0, 17.0],
+        [0.0, 14.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [57.0, 0.0],
+        [57.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [52.0, 0.0],
+        [52.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece3"
+    },
+    {
+      "id": 4,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [44.0, 0.0],
+        [44.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece4"
+    },
+    {
+      "id": 5,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [42.0, 0.0],
+        [42.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece5"
+    },
+    {
+      "id": 6,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [21.0, 0.0],
+        [21.0, 2.0],
+        [0.0, 2.0]
+      ],
+      "name": "piece6"
+    },
+    {
+      "id": 7,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [13.0, 0.0],
+        [15.0, 3.0],
+        [0.0, 7.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece7"
+    },
+    {
+      "id": 8,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [15.0, 0.0],
+        [15.0, 3.0],
+        [0.0, 4.0]
+      ],
+      "name": "piece8"
+    },
+    {
+      "id": 9,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 0.0],
+        [14.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece9"
+    },
+    {
+      "id": 10,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 0.0],
+        [14.0, 3.0],
+        [0.0, 4.0]
+      ],
+      "name": "piece10"
+    },
+    {
+      "id": 11,
+      "quantity": 1,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [13.0, 0.0],
+        [13.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece11"
+    },
+    {
+      "id": 12,
+      "quantity": 2,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [13.0, 0.0],
+        [13.0, 3.0],
+        [0.0, 4.0]
+      ],
+      "name": "piece12"
+    },
+    {
+      "id": 13,
+      "quantity": 2,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [12.0, 0.0],
+        [12.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece13"
+    },
+    {
+      "id": 14,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [10.0, 0.0],
+        [12.0, 1.0],
+        [10.0, 9.0],
+        [6.0, 11.0],
+        [2.0, 9.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece14"
+    },
+    {
+      "id": 15,
+      "quantity": 8,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [8.0, 0.0],
+        [8.0, 8.0],
+        [3.0, 10.0],
+        [0.0, 8.0]
+      ],
+      "name": "piece15"
+    },
+    {
+      "id": 16,
+      "quantity": 4,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [1.0, 0.0],
+        [5.0, 0.0],
+        [6.0, 1.0],
+        [5.0, 6.0],
+        [3.0, 7.0],
+        [1.0, 6.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece16"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Data set from the textile industry, coordinates stated in Oliveira J. F., Gomes A. M. and Ferreira S., 2000, \"A new constructive algorithm for nesting problems\", OR Spectrum 22 (2), 263-284."
+  }
+}

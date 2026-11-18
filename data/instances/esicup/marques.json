@@ -1,0 +1,177 @@
+{
+  "format": "nesting-instance/1",
+  "name": "marques",
+  "unit": null,
+  "source": "esicup:marques/marques.xml",
+  "sheet": {
+    "width": 104.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 4,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [7.0, 0.0],
+        [14.0, 0.0],
+        [21.0, 6.0],
+        [21.0, 28.0],
+        [0.0, 28.0],
+        [0.0, 6.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 4,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [11.0, 0.0],
+        [17.0, 2.0],
+        [21.0, 1.0],
+        [19.0, 6.0],
+        [11.0, 4.0],
+        [2.0, 6.0],
+        [0.0, 1.0],
+        [4.0, 2.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 2,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [13.0, 2.0],
+        [26.0, 0.0],
+        [30.0, 3.0],
+        [33.0, 3.0],
+        [33.0, 17.0],
+        [0.0, 17.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 2,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [4.0, 0.0],
+        [4.0, 39.0],
+        [0.0, 39.0]
+      ],
+      "name": "piece3"
+    },
+    {
+      "id": 4,
+      "quantity": 4,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [10.0, 0.0],
+        [10.0, 11.0],
+        [0.0, 11.0]
+      ],
+      "name": "piece4"
+    },
+    {
+      "id": 5,
+      "quantity": 4,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [2.0, 0.0],
+        [4.0, 10.0],
+        [2.0, 20.0],
+        [0.0, 18.0],
+        [2.0, 10.0],
+        [0.0, 2.0]
+      ],
+      "name": "piece5"
+    },
+    {
+      "id": 6,
+      "quantity": 2,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [12.0, 0.0],
+        [14.0, 2.0],
+        [16.0, 2.0],
+        [18.0, 0.0],
+        [25.0, 4.0],
+        [25.0, 11.0],
+        [29.0, 15.0],
+        [27.0, 25.0],
+        [29.0, 37.0],
+        [0.0, 37.0],
+        [2.0, 25.0],
+        [0.0, 15.0],
+        [4.0, 11.0],
+        [4.0, 3.0]
+      ],
+      "name": "piece6"
+    },
+    {
+      "id": 7,
+      "quantity": 2,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 2.0],
+        [25.0, 0.0],
+        [28.0, 2.0],
+        [35.0, 2.0],
+        [37.0, 9.0],
+        [33.0, 15.0],
+        [0.0, 15.0]
+      ],
+      "name": "piece7"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Data set from the textile industry, scanned by E. Hopper from sample layout in Marques V. M. M., Bispo C. F .G. and Sentieiro J. J. S., 1991, \"A system for the compaction of two-dimensional irregular shapes based on simulated annealing\", Proceedings of the 1991 International Conference on Industrial Electronics, Control and Instrumentation - IECON '91, Kobe, Japan, Oct. 1991, pp. 1911-1916."
+  }
+}

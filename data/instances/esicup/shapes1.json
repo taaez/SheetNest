@@ -1,0 +1,83 @@
+{
+  "format": "nesting-instance/1",
+  "name": "shapes1",
+  "unit": null,
+  "source": "esicup:shapes/shapes1.xml",
+  "sheet": {
+    "width": 40.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 15,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 0.0],
+        [14.0, 5.0],
+        [12.0, 5.0],
+        [12.0, 2.0],
+        [2.0, 2.0],
+        [2.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 7,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [6.0, 0.0],
+        [12.0, 6.0],
+        [6.0, 12.0],
+        [0.0, 6.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 9,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 3.0],
+        [8.0, 3.0],
+        [8.0, 0.0],
+        [11.0, 0.0],
+        [11.0, 2.0],
+        [7.0, 6.0],
+        [6.0, 6.0],
+        [6.0, 4.0],
+        [0.0, 4.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 12,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [4.0, 0.0],
+        [4.0, 2.0],
+        [6.0, 2.0],
+        [6.0, 4.0],
+        [4.0, 4.0],
+        [4.0, 6.0],
+        [2.0, 6.0],
+        [2.0, 4.0],
+        [0.0, 4.0],
+        [0.0, 2.0],
+        [2.0, 2.0]
+      ],
+      "name": "piece3"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Artificially created data set, coordinates stated in Oliveira J. F., Gomes A. M. and Ferreira S., 2000, \"A new constructive algorithm for nesting problems\", OR Spectrum 22 (2), 263-284."
+  }
+}

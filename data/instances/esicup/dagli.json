@@ -1,0 +1,158 @@
+{
+  "format": "nesting-instance/1",
+  "name": "dagli",
+  "unit": null,
+  "source": "esicup:dagli/dagli.xml",
+  "sheet": {
+    "width": 60.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [1.0, 0.0],
+        [11.0, 0.0],
+        [10.0, 1.0],
+        [15.0, 6.0],
+        [12.0, 9.0],
+        [7.0, 4.0],
+        [1.0, 2.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [5.0, 0.0],
+        [9.0, 10.0],
+        [9.0, 12.0],
+        [5.0, 12.0],
+        [5.0, 11.0],
+        [4.0, 11.0],
+        [4.0, 12.0],
+        [0.0, 12.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [9.0, 0.0],
+        [11.0, 6.0],
+        [11.0, 18.0],
+        [9.0, 24.0],
+        [2.0, 24.0],
+        [0.0, 18.0],
+        [0.0, 6.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 0.0],
+        [14.0, 15.0],
+        [0.0, 15.0]
+      ],
+      "name": "piece3"
+    },
+    {
+      "id": 4,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [7.0, 0.0],
+        [9.0, 5.0],
+        [0.0, 5.0]
+      ],
+      "name": "piece4"
+    },
+    {
+      "id": 5,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [2.0, 0.0],
+        [5.0, 2.0],
+        [11.0, 22.0],
+        [6.0, 32.0],
+        [3.0, 33.0],
+        [1.0, 30.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece5"
+    },
+    {
+      "id": 6,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [1.0, 0.0],
+        [13.0, 0.0],
+        [23.0, 5.0],
+        [5.0, 5.0],
+        [0.0, 2.0]
+      ],
+      "name": "piece6"
+    },
+    {
+      "id": 7,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [2.0, 2.0],
+        [3.0, 2.0],
+        [4.0, 1.0],
+        [4.0, 0.0],
+        [5.0, 0.0],
+        [4.0, 6.0],
+        [1.0, 6.0]
+      ],
+      "name": "piece7"
+    },
+    {
+      "id": 8,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [6.0, 0.0],
+        [8.0, 3.0],
+        [1.0, 3.0],
+        [0.0, 1.0]
+      ],
+      "name": "piece8"
+    },
+    {
+      "id": 9,
+      "quantity": 3,
+      "rotations": [0.0, 180.0],
+      "polygon": [
+        [5.0, 0.0],
+        [14.0, 6.0],
+        [0.0, 6.0]
+      ],
+      "name": "piece9"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Data set from the textile industry, scanned by E. Hopper from sample layout in Ratanapan K. and Dagli C. H., 1997, \"An object-based evolutionary algorithm for solving irregular nesting problems\", In: Proceedings for Artificial Neural Networks in Engineering Conference (ANNIE'97), vol. 7, ASME Press, New York, pp. 383-388."
+  }
+}

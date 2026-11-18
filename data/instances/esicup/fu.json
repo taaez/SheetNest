@@ -1,0 +1,215 @@
+{
+  "format": "nesting-instance/1",
+  "name": "fu",
+  "unit": null,
+  "source": "esicup:fu/fu.xml",
+  "sheet": {
+    "width": 38.0
+  },
+  "items": [
+    {
+      "id": 0,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [10.0, 0.0],
+        [10.0, 10.0],
+        [0.0, 10.0]
+      ],
+      "name": "piece0"
+    },
+    {
+      "id": 1,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [10.0, 0.0],
+        [10.0, 10.0],
+        [0.0, 10.0]
+      ],
+      "name": "piece1"
+    },
+    {
+      "id": 2,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 0.0],
+        [14.0, 9.0],
+        [0.0, 9.0]
+      ],
+      "name": "piece2"
+    },
+    {
+      "id": 3,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [7.0, 0.0],
+        [14.0, 7.0],
+        [0.0, 7.0]
+      ],
+      "name": "piece3"
+    },
+    {
+      "id": 4,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 0.0],
+        [0.0, 9.0]
+      ],
+      "name": "piece4"
+    },
+    {
+      "id": 5,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [14.0, 0.0],
+        [14.0, 14.0],
+        [0.0, 14.0]
+      ],
+      "name": "piece5"
+    },
+    {
+      "id": 6,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [10.0, 0.0],
+        [10.0, 5.0],
+        [0.0, 9.0]
+      ],
+      "name": "piece6"
+    },
+    {
+      "id": 7,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 9.0],
+        [0.0, 9.0]
+      ],
+      "name": "piece7"
+    },
+    {
+      "id": 8,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [14.0, 0.0],
+        [14.0, 14.0],
+        [0.0, 14.0]
+      ],
+      "name": "piece8"
+    },
+    {
+      "id": 9,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [10.0, 4.0],
+        [10.0, 14.0],
+        [0.0, 14.0]
+      ],
+      "name": "piece9"
+    },
+    {
+      "id": 10,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [0.0, 0.0],
+        [8.0, 0.0],
+        [4.0, 8.0]
+      ],
+      "name": "piece10"
+    },
+    {
+      "id": 11,
+      "quantity": 1,
+      "rotations": [
+        0.0,
+        90.0,
+        180.0,
+        270.0
+      ],
+      "polygon": [
+        [7.0, 0.0],
+        [14.0, 12.0],
+        [0.0, 12.0]
+      ],
+      "name": "piece11"
+    }
+  ],
+  "meta": {
+    "converted_from": "esicup-xml",
+    "coordinates_origin": "up-left",
+    "description": "Artificially created data set, scanned by E. Hopper from sample layout in Fujita K., Akagji, S. and Kirokawa, N., 1993, \"Hybrid approach for optimal nesting using a genetic algorithm and a local minimisation algorithm\", Proceedings of the 19th Annual ASME Design Automation Conference, Part 1 (of 2), Albuquerque, NM, USA, vol. 65, part 1, pp. 477-484."
+  }
+}
