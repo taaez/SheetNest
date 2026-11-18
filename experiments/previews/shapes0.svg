@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="170" font-family="sans-serif">
+<text x="8" y="20" font-size="14">shapes0: 4 types / 43 pieces, width 40.004 (each cell scaled separately)</text>
+<polygon points="20.00,150.00 34.29,150.00 34.29,128.57 105.71,128.57 105.71,150.00 120.00,150.00 120.00,114.29 20.00,114.29" fill="#9DC3E6" stroke="#1F3864" stroke-width="1"/>
+<text x="6" y="44" font-size="11">id 0 x15</text>
+<polygon points="210.00,150.00 260.00,100.00 210.00,50.00 160.00,100.00" fill="#F4B183" stroke="#1F3864" stroke-width="1"/>
+<text x="146" y="44" font-size="11">id 1 x7</text>
+<polygon points="354.55,150.00 363.64,150.00 400.00,113.64 400.00,95.45 372.73,95.45 372.73,122.73 318.18,122.73 318.18,95.45 300.00,95.45 300.00,131.82 354.55,131.82" fill="#A9D18E" stroke="#1F3864" stroke-width="1"/>
+<text x="286" y="44" font-size="11">id 2 x9</text>
+<polygon points="473.33,150.00 506.67,150.00 506.67,116.67 540.00,116.67 540.00,83.33 506.67,83.33 506.67,50.00 473.33,50.00 473.33,83.33 440.00,83.33 440.00,116.67 473.33,116.67" fill="#FFD966" stroke="#1F3864" stroke-width="1"/>
+<text x="426" y="44" font-size="11">id 3 x12</text>
+</svg>

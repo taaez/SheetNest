@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="730" font-family="sans-serif">
+<text x="8" y="20" font-size="14">jakobs1: 25 types / 25 pieces, width 40.004 (each cell scaled separately)</text>
+<polygon points="20.00,150.00 120.00,150.00 20.00,50.00" fill="#9DC3E6" stroke="#1F3864" stroke-width="1"/>
+<text x="6" y="44" font-size="11">id 0 x1</text>
+<polygon points="160.00,150.00 260.00,150.00 160.00,50.00" fill="#F4B183" stroke="#1F3864" stroke-width="1"/>
+<text x="146" y="44" font-size="11">id 1 x1</text>
+<polygon points="300.00,150.00 400.00,150.00 300.00,50.00" fill="#A9D18E" stroke="#1F3864" stroke-width="1"/>
+<text x="286" y="44" font-size="11">id 2 x1</text>
+<polygon points="540.00,150.00 540.00,50.00 440.00,50.00" fill="#FFD966" stroke="#1F3864" stroke-width="1"/>
+<text x="426" y="44" font-size="11">id 3 x1</text>
+<polygon points="680.00,150.00 680.00,100.00 580.00,100.00" fill="#C9A0DC" stroke="#1F3864" stroke-width="1"/>
+<text x="566" y="44" font-size="11">id 4 x1</text>
+<polygon points="820.00,150.00 820.00,92.86 720.00,92.86" fill="#8FD3C7" stroke="#1F3864" stroke-width="1"/>
+<text x="706" y="44" font-size="11">id 5 x1</text>
+<polygon points="20.00,290.00 120.00,290.00 120.00,230.00 80.00,230.00 80.00,190.00 20.00,190.00" fill="#F8A5A5" stroke="#1F3864" stroke-width="1"/>
+<text x="6" y="184" font-size="11">id 6 x1</text>
+<polygon points="160.00,290.00 260.00,290.00 260.00,265.00 210.00,265.00 210.00,190.00 160.00,190.00" fill="#BFBFBF" stroke="#1F3864" stroke-width="1"/>
+<text x="146" y="184" font-size="11">id 7 x1</text>
+<polygon points="300.00,290.00 400.00,290.00 400.00,240.00 366.67,240.00 366.67,190.00 300.00,190.00" fill="#9DC3E6" stroke="#1F3864" stroke-width="1"/>
+<text x="286" y="184" font-size="11">id 8 x1</text>
+<polygon points="440.00,290.00 540.00,290.00 540.00,250.00 500.00,250.00 500.00,270.00 440.00,270.00" fill="#F4B183" stroke="#1F3864" stroke-width="1"/>
+<text x="426" y="184" font-size="11">id 9 x1</text>
+<polygon points="580.00,290.00 680.00,290.00 680.00,240.00 655.00,240.00 655.00,265.00 580.00,265.00" fill="#A9D18E" stroke="#1F3864" stroke-width="1"/>
+<text x="566" y="184" font-size="11">id 10 x1</text>
+<polygon points="720.00,290.00 820.00,290.00 820.00,240.00 786.67,240.00 786.67,190.00 720.00,190.00" fill="#FFD966" stroke="#1F3864" stroke-width="1"/>
+<text x="706" y="184" font-size="11">id 11 x1</text>
+<polygon points="20.00,430.00 120.00,430.00 120.00,330.00 20.00,330.00" fill="#C9A0DC" stroke="#1F3864" stroke-width="1"/>
+<text x="6" y="324" font-size="11">id 12 x1</text>
+<polygon points="160.00,430.00 260.00,430.00 260.00,330.00 160.00,330.00" fill="#8FD3C7" stroke="#1F3864" stroke-width="1"/>
+<text x="146" y="324" font-size="11">id 13 x1</text>
+<polygon points="300.00,430.00 400.00,430.00 400.00,330.00 300.00,330.00" fill="#F8A5A5" stroke="#1F3864" stroke-width="1"/>
+<text x="286" y="324" font-size="11">id 14 x1</text>
+<polygon points="473.33,430.00 506.67,430.00 506.67,396.67 540.00,396.67 540.00,363.33 506.67,363.33 506.67,330.00 473.33,330.00 473.33,363.33 440.00,363.33 440.00,396.67 473.33,396.67" fill="#BFBFBF" stroke="#1F3864" stroke-width="1"/>
+<text x="426" y="324" font-size="11">id 15 x1</text>
+<polygon points="613.33,430.00 646.67,430.00 646.67,396.67 680.00,396.67 680.00,363.33 646.67,363.33 646.67,330.00 613.33,330.00 613.33,363.33 580.00,363.33 580.00,396.67 613.33,396.67" fill="#9DC3E6" stroke="#1F3864" stroke-width="1"/>
+<text x="566" y="324" font-size="11">id 16 x1</text>
+<polygon points="753.33,430.00 786.67,430.00 786.67,396.67 820.00,396.67 820.00,363.33 786.67,363.33 786.67,330.00 753.33,330.00 753.33,363.33 720.00,363.33 720.00,396.67 753.33,396.67" fill="#F4B183" stroke="#1F3864" stroke-width="1"/>
+<text x="706" y="324" font-size="11">id 17 x1</text>
+<polygon points="53.33,570.00 86.67,570.00 86.67,536.67 120.00,536.67 120.00,503.33 86.67,503.33 86.67,470.00 53.33,470.00 53.33,503.33 20.00,503.33 20.00,536.67 53.33,536.67" fill="#A9D18E" stroke="#1F3864" stroke-width="1"/>
+<text x="6" y="464" font-size="11">id 18 x1</text>
+<polygon points="160.00,570.00 260.00,570.00 260.00,520.00 160.00,520.00" fill="#FFD966" stroke="#1F3864" stroke-width="1"/>
+<text x="146" y="464" font-size="11">id 19 x1</text>
+<polygon points="300.00,570.00 325.00,570.00 325.00,470.00 300.00,470.00" fill="#C9A0DC" stroke="#1F3864" stroke-width="1"/>
+<text x="286" y="464" font-size="11">id 20 x1</text>
+<polygon points="440.00,570.00 540.00,570.00 540.00,530.00 440.00,530.00" fill="#8FD3C7" stroke="#1F3864" stroke-width="1"/>
+<text x="426" y="464" font-size="11">id 21 x1</text>
+<polygon points="613.33,570.00 646.67,570.00 680.00,536.67 680.00,503.33 646.67,470.00 613.33,470.00 580.00,503.33 580.00,536.67" fill="#F8A5A5" stroke="#1F3864" stroke-width="1"/>
+<text x="566" y="464" font-size="11">id 22 x1</text>
+<polygon points="757.50,570.00 795.00,570.00 820.00,545.00 820.00,520.00 795.00,495.00 757.50,495.00 720.00,520.00 720.00,545.00" fill="#BFBFBF" stroke="#1F3864" stroke-width="1"/>
+<text x="706" y="464" font-size="11">id 23 x1</text>
+<polygon points="53.33,710.00 86.67,710.00 120.00,693.33 120.00,676.67 86.67,660.00 53.33,660.00 20.00,676.67 20.00,693.33" fill="#9DC3E6" stroke="#1F3864" stroke-width="1"/>
+<text x="6" y="604" font-size="11">id 24 x1</text>
+</svg>
