@@ -48,7 +48,8 @@ def main():
         print(
             f"{inst.name:10s} {a.algorithm}: L={sol.length:.6g} (하한 대비 +{(sol.length / lb - 1) * 100:.1f}%), "
             f"U={sol.utilization * 100:.2f}%, {sol.time_ms:.1f}ms, "
-            f"overlap_checks={sol.stats.get('overlap_checks', 0)}  {'OK' if rep.ok else 'INVALID'}"
+            f"overlap_checks={sol.stats.get('overlap_checks', 0)}, decode_calls={sol.stats.get('decode_calls', '-')}  "
+            f"{'OK' if rep.ok else 'INVALID'}"
         )
         if not rep.ok:
             print(rep)

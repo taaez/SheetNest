@@ -82,7 +82,7 @@ def validate(inst: Instance, sol: Solution, spacing: float = 0.0, rel_tol: float
                 break
             pairs += 1
             if c._overlap(sa, sb, eps, spacing):  # 집계하지 않는 내부 함수
-                what = "간격 부족" if spacing > 0 and not c._interiors_overlap(sa.pts, sb.pts, eps) else "겹침"
+                what = "간격 부족" if spacing > 0 and not c._interiors_overlap(sa, sb, eps) else "겹침"
                 errs.append(f"{what}: item {pa.item}#{pa.copy} ↔ item {pb.item}#{pb.copy}")
 
     # 5) length, utilization 일치

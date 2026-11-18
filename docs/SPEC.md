@@ -1,6 +1,6 @@
 # SheetNest 공통 입출력 형식 (v1 초안)
 
-모든 알고리즘(BL, NFP, GA)은 **같은 입력(instance JSON)을 받아 같은 출력(solution JSON)을 낸다.**
+모든 알고리즘(정렬 그리디, 지역 탐색·SA, GA)은 **같은 입력(instance JSON)을 받아 같은 출력(solution JSON)을 낸다.**
 이 형식이 바뀌면 전원에게 공지하고 `format` 버전을 올린다.
 
 ## 1. 좌표계와 용어
@@ -69,7 +69,7 @@
 
 | 필드 | 규칙 |
 |---|---|
-| `algorithm` | `bl`, `nfp`, `ga` 등 짧은 이름 |
+| `algorithm` | `greedy`, `local_search`, `ga` 등 짧은 이름 |
 | `placements[]` | 모든 부품 사본마다 정확히 1개. `copy`는 0 ~ quantity-1 |
 | `rotation` | 해당 item의 `rotations` 중 하나 |
 | `x`, `y` | 배치 변환의 이동량 |
@@ -109,44 +109,83 @@
 python tools/validate.py <instance.json> <solution.json> [--spacing 0.5]
 ```
 
-## 5. 알고리즘 공통 인터페이스
+## 5. 비교 구조와 알고리즘 공통 인터페이스
+
+### 5.1 세 층 중 '순서 탐색'만 비교한다
+
+배치 알고리즘은 세 층으로 이루어진다. **같은 층의 대안끼리만 비교**해야 공정하므로 두 층은 고정한다.
+
+| 층 | 역할 | 이 프로젝트 |
+|---|---|---|
+| 순서 탐색 | 어떤 순서·회전으로 놓을지 | **비교 대상**: ① 정렬 그리디 ② 지역 탐색 또는 시뮬레이티드 어닐링 ③ 유전 알고리즘 |
+| 위치 선택 규칙 | 놓을 수 있는 위치 중 어디를 고를지 | 고정: Bottom-Left (문헌상 가장 널리 쓰이는 규칙) |
+| 가능 위치 계산 | 어디에 놓을 수 있는지 | 고정: 후보점 + 공통 겹침 판정 |
+
+- 아래 두 층은 `nesting/decoder.py`의 **BL 디코더** 하나로 구현되어 있고, 세 알고리즘이 그대로 쓴다.
+- 고정 층(디코더 옵션 포함)은 본 실험 전에 확정하고 실험 도중 바꾸지 않는다.
+- NFP 등 다른 가능 위치 계산 방법은 비교 대상이 아니다. 본 실험 이후 확장으로만 검토한다
+  (바꿀 경우 세 알고리즘 실험을 처음부터 다시 돌린다).
+
+### 5.2 알고리즘 함수
 
 ```python
-from nesting.model import Instance, Solution
-
-
 def nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution: ...
 ```
 
-- `algorithms/<이름>/__init__.py`에 구현하고 `algorithms/__init__.py`의 `REGISTRY`에 등록한다.
-- `time_limit_s`가 주어지면 그 안에 가장 좋은 해를 반환한다.
-- 결과는 `nesting.model.make_solution()`으로 만든다 (length·utilization 계산 통일).
+- `algorithms/<이름>/__init__.py`에 구현, `algorithms/__init__.py`의 `REGISTRY`에 등록.
+- 알고리즘이 정하는 것은 **배치 순서 `seq = [(item_id, rotation), ...]`** 뿐이다 (부품 사본마다 1개).
+- 배치·결과 생성은 반드시 디코더로 한다.
 
-**겹침 판정 (공통 모듈 `nesting/collision.py`)**
+```python
+import time
+from nesting import collision as c
+from nesting.decoder import Decoder
+
+c.reset_stats()
+t0 = time.perf_counter()
+dec = Decoder(inst)  # 고정 층
+seq = dec.default_sequence()  # 예: 면적 큰 순 + 들어가는 첫 회전
+L = dec.length(seq)  # 평가: 사용 길이 (작을수록 좋음)
+...  # 순서 탐색 (알고리즘마다 다른 부분)
+return dec.to_solution(best_seq, "ga", t0, {"seed": seed, "params": params, "history": history})
+```
+
+- 회전은 `dec.feasible_rotations(item)` 중에서만 고른다 (원판 폭보다 높은 회전은 오류).
+- 난수는 `random.Random(seed)` 하나만 쓴다 (재현 가능).
+
+### 5.3 BL 디코더 동작 (`nesting/decoder.py`)
+
+부품을 seq 순서대로 하나씩 놓는다. 부품마다:
+1. **후보점 생성**: 이미 놓인 부품들의 바운딩 박스 경계에 맞닿는 위치
+   - x 후보: 0, 각 부품의 오른쪽 끝 / y 후보: 0, 각 부품의 위쪽 끝, 각 부품의 아래쪽 끝 − 높이, W − 높이
+2. **Bottom-Left 선택**: 후보를 (x, y) 오름차순으로 검사해, 원판 안이고 겹치지 않는 첫 위치를 고른다
+3. **미끄러뜨리기**(옵션 `slide=True`, 기본): 그 위치에서 아래로, 왼쪽으로 겹치기 직전까지 반복해서 민다
+   (이진 탐색, 최소 단위 W × 1e-3). 바운딩 박스로는 못 들어가는 오목한 틈에 파고들게 한다.
+
+결정적이다(같은 seq → 같은 배치). 겹침 판정은 공통 `collision.overlap()`만 쓴다.
+
+### 5.4 겹침 판정 (`nesting/collision.py`)
 
 ```python
 from nesting import collision as c
 
 eps = c.tolerance_for(inst.sheet_width)
-a = c.Shape.placed(item.polygon, rotation, x, y)  # 변환 + 바운딩 박스 캐시
+a = c.Shape.placed(item.polygon, rotation, x, y)  # 변환 + 바운딩 박스·변 박스 캐시
 c.overlap(a, b, eps, spacing=0.0)  # 내부가 겹치면 True (맞닿음은 False)
-c.inside_sheet(a, inst.sheet_width, eps)  # 원판 안인지
 ```
 
-- 각자 겹침 판정을 따로 구현하지 않는다. 그래야 "핵심부 비교" 조건이 지켜진다.
-- 판정 순서: 바운딩 박스 필터 → 변 관통 검사 → 포함 검사(꼭짓점·경계 안쪽 점).
-- 순수 Python 구현. 실험에서 느리면 그때 최적화한다(결과는 바뀌면 안 됨, 테스트로 확인).
+- 판정 순서: 바운딩 박스 필터 → 두 박스 교집합 근처의 변만 관통 검사 → 포함 검사(꼭짓점·경계 안쪽 점)
+- 순수 Python. shapely와 무작위 12,000쌍 비교 불일치 0건, 1회 평균 약 16µs (개발 환경 기준)
 
-**계산량 기록 (필수)**
+### 5.5 공정한 비교 규칙
 
-```python
-c.reset_stats()  # 알고리즘 시작 시
-...
-make_solution(inst, "bl", placements, time_ms, {**c.get_stats(), "seed": seed, "params": params})
-```
+세 알고리즘 모두 같은 디코더를 반복 호출하므로 **"같은 예산에서 누가 더 좋은 순서를 찾는가"**로 비교한다.
 
-`overlap_checks`는 `overlap()` 호출 횟수, `bbox_rejects`는 그중 바운딩 박스 필터에서 끝난 횟수다.
-NFP처럼 `overlap()`을 거의 쓰지 않는 알고리즘은 `candidate_evals` 등 자체 지표를 추가한다(정의는 회의에서 확정).
+- 예산: 같은 시간(`time_limit_s`) 또는 같은 평가 횟수(`decode_calls`) — 조건은 회의에서 확정
+- 출발점: 지역 탐색·GA는 정렬 그리디와 같은 순서에서 출발 (얼마나 개선하는지 측정)
+- 무작위 알고리즘은 시드 10회 이상 반복, 평균·표준편차·최고값 보고
+- `stats` 필수 항목: `overlap_checks`, `bbox_rejects`, `decode_calls`, `seed`, `params`
+  (탐색 알고리즘은 `history`: (평가 횟수, 최고 길이) 목록 권장 → 수렴 곡선)
 
 ## 6. 데이터 출처별 변환 규칙
 
@@ -166,4 +205,6 @@ DXF·SVG는 같은 모양 부품을 자동으로 합쳐 `quantity`를 올린다(
 - [ ] 구멍 안에 작은 부품 넣기(v2) 지원 여부
 - [ ] 자유 회전 인스턴스(`_c`) 실험 포함 여부와 이산화 간격
 - [ ] 시간 제한 실험 조건(예: 10초, 60초), GA 반복 시드 수
-- [ ] NFP 방식의 계산량 지표 정의
+- [ ] 순서 탐색 2번을 지역 탐색과 시뮬레이티드 어닐링 중 무엇으로 할지
+- [ ] 디코더 미끄러뜨리기(slide) 사용 여부 (swim·gardeyn1은 개선, shirts는 악화, 시간 증가)
+- [ ] 비교 예산 기준: 같은 시간 vs 같은 평가 횟수

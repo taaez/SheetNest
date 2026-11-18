@@ -19,7 +19,7 @@ pytest
 
 ## 2. 브랜치
 
-- **각자 자기 브랜치에서 작업하고 push한다.** 브랜치 이름: `이름/작업` (예: `taejeong/validator`, `yujin/bl`)
+- **각자 자기 브랜치에서 작업하고 push한다.** 브랜치 이름: `이름/작업` (예: `taejeong/validator`, `yujin/ga`)
 - **main에는 최종 결과물만 올린다.** 자기 브랜치에서 테스트가 통과한 것을 main에 합친다.
 - 작업 시작 전 main 최신 내용을 받아 온다.
 
@@ -39,9 +39,9 @@ git push -u origin 이름/작업
 `영역: 무엇을 했는지` 형식, 한국어로 짧게.
 
 ```
-BL: 회전별 후보 위치 생성
-NFP: 볼록 다각형 민코프스키 합 구현
-core: 겹침 판정 바운딩 박스 필터 개선
+greedy: 둘레 기준 정렬 추가
+ga: 순서 교차(OX) 구현
+core: 디코더 후보점 생성 개선
 web: 결과 비교 화면 초안
 docs: SPEC에 kerf 규칙 추가
 ```
@@ -57,7 +57,7 @@ ruff check . --fix
 
 ## 5. 공통 모듈 규칙
 
-- 겹침 판정은 `nesting/collision.py`의 `overlap()`만 사용한다. 각자 따로 만들지 않는다.
-- 결과는 `nesting.model.make_solution()`으로 만든다.
+- 배치는 `nesting/decoder.py`의 BL 디코더, 겹침 판정은 `nesting/collision.py`만 사용한다 (고정 층). 각자 따로 만들지 않는다.
+- 알고리즘은 배치 순서·회전만 정하고, 결과는 `Decoder.to_solution()`으로 만든다.
 - `nesting/`, `docs/SPEC.md`를 바꾸면 팀 대화방에 공지한다 (모두의 코드에 영향).
 - 알고리즘 결과는 `tools/run.py`로 실행해 검증기 OK를 확인한다.
