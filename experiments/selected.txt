@@ -1,0 +1,9 @@
+# 실험용 인스턴스 7개 (쉬운 것 → 어려운 것). 경로는 저장소 루트 기준.
+# 선정 이유는 experiments/README.md 참고. sparrow 버전을 쓰는 이유: sparrow 논문 결과와 같은 조건으로 비교하기 위함.
+data/instances/sparrow/fu.json         # 1. 볼록 12개, 4방향 회전 — 첫 구현 확인용
+data/instances/sparrow/jakobs1.json    # 2. 25개, 오목 10종 — 오목 다각형 처리 확인
+data/instances/sparrow/shapes0.json    # 3. 43개, 회전 불가 — 회전 없이 순서·위치만의 효과
+data/instances/sparrow/shirts.json     # 4. 의류 산업, 99개 — 부품 수가 많을 때의 속도
+data/instances/sparrow/trousers.json   # 5. 의류 산업, 64개, 길쭉한 부품
+data/instances/sparrow/swim.json       # 6. 의류 산업(수영복), 꼭짓점 최대 36 — 복잡한 형상
+data/instances/sparrow/gardeyn1.json   # 7. 실제 산업 응용(2025), 꼭짓점 최대 152 — 실제 데이터 근거

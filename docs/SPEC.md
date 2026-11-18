@@ -91,26 +91,62 @@
 코드에서는 `nesting.geometry.transform(poly, rotation, x, y)`를 쓰고, length·utilization은
 `nesting.model.make_solution()`으로 계산한다(직접 계산 금지, 모두 같은 함수 사용).
 
-## 4. 유효한 해의 조건 (검증기가 확인할 내용)
+## 4. 유효한 해의 조건 (검증기 `nesting/validate.py`가 확인)
 
 1. 모든 부품 사본이 정확히 한 번씩 배치됨
 2. 각 부품의 `rotation`이 허용 목록에 있음
-3. 모든 꼭짓점이 `0 ≤ x`, `0 ≤ y ≤ W` 안에 있음 (허용 오차 1e-6 × W)
-4. 어떤 두 부품도 내부가 겹치지 않음 (**변끼리 닿는 것은 허용**)
+3. 모든 꼭짓점이 `0 ≤ x`, `0 ≤ y ≤ W` 안에 있음
+4. 어떤 두 부품도 내부가 겹치지 않음 (**변·꼭짓점끼리 닿는 것은 허용**)
 5. `length`, `utilization` 값이 3절 정의와 일치
+
+**허용 오차**: `eps = 1e-6 × W` (원판 폭 대비 상대값, `collision.tolerance_for(W)`).
+거리 기준이며, 이보다 작은 파고듦·틈은 무시한다. 벤치마크마다 W가 38~20,000으로 달라 상대값을 쓴다.
+
+**부품 간격(kerf)**: `spacing` 매개변수(기본 0). 0보다 크면 두 부품 사이 거리가 `spacing` 미만인 것도 위반이다.
+실험 기본값은 0이며, 반영 여부는 회의에서 확정한다.
+
+```bash
+python tools/validate.py <instance.json> <solution.json> [--spacing 0.5]
+```
 
 ## 5. 알고리즘 공통 인터페이스
 
 ```python
 from nesting.model import Instance, Solution
 
-def nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution:
-    ...
+
+def nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution: ...
 ```
 
-- 겹침 판정은 반드시 `nesting/geometry.py`(A 담당)의 공통 함수를 쓴다.
-  각자 따로 구현하면 "핵심부 비교" 조건이 깨진다.
+- `algorithms/<이름>/__init__.py`에 구현하고 `algorithms/__init__.py`의 `REGISTRY`에 등록한다.
 - `time_limit_s`가 주어지면 그 안에 가장 좋은 해를 반환한다.
+- 결과는 `nesting.model.make_solution()`으로 만든다 (length·utilization 계산 통일).
+
+**겹침 판정 (공통 모듈 `nesting/collision.py`)**
+
+```python
+from nesting import collision as c
+
+eps = c.tolerance_for(inst.sheet_width)
+a = c.Shape.placed(item.polygon, rotation, x, y)  # 변환 + 바운딩 박스 캐시
+c.overlap(a, b, eps, spacing=0.0)  # 내부가 겹치면 True (맞닿음은 False)
+c.inside_sheet(a, inst.sheet_width, eps)  # 원판 안인지
+```
+
+- 각자 겹침 판정을 따로 구현하지 않는다. 그래야 "핵심부 비교" 조건이 지켜진다.
+- 판정 순서: 바운딩 박스 필터 → 변 관통 검사 → 포함 검사(꼭짓점·경계 안쪽 점).
+- 순수 Python 구현. 실험에서 느리면 그때 최적화한다(결과는 바뀌면 안 됨, 테스트로 확인).
+
+**계산량 기록 (필수)**
+
+```python
+c.reset_stats()  # 알고리즘 시작 시
+...
+make_solution(inst, "bl", placements, time_ms, {**c.get_stats(), "seed": seed, "params": params})
+```
+
+`overlap_checks`는 `overlap()` 호출 횟수, `bbox_rejects`는 그중 바운딩 박스 필터에서 끝난 횟수다.
+NFP처럼 `overlap()`을 거의 쓰지 않는 알고리즘은 `candidate_evals` 등 자체 지표를 추가한다(정의는 회의에서 확정).
 
 ## 6. 데이터 출처별 변환 규칙
 
@@ -126,7 +162,8 @@ DXF·SVG는 같은 모양 부품을 자동으로 합쳐 `quantity`를 올린다(
 
 ## 7. 아직 정하지 않은 것 (회의 안건)
 
-- [ ] 부품 간 최소 간격(커터 날 두께, kerf) 반영 여부 → 반영 시 부품을 kerf/2만큼 확장
+- [ ] 부품 간 최소 간격(kerf) 실험 반영 여부 (검증기·겹침 판정은 `spacing`으로 이미 지원, 기본 0)
 - [ ] 구멍 안에 작은 부품 넣기(v2) 지원 여부
 - [ ] 자유 회전 인스턴스(`_c`) 실험 포함 여부와 이산화 간격
-- [ ] 시간 제한 실험 조건(예: 10초, 60초)
+- [ ] 시간 제한 실험 조건(예: 10초, 60초), GA 반복 시드 수
+- [ ] NFP 방식의 계산량 지표 정의
