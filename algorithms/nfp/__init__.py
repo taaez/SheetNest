@@ -41,7 +41,7 @@ class NFPPlacer(Placer):
     counters()
         REQUIRED_COUNTERS의 키를 모두 담은 dict를 돌려준다.
 
-    tests/test_contract.py가 이 클래스를 자동으로 검사한다. 구현 전에는 건너뛴다.
+    tests/test_constraints.py가 이 클래스를 자동으로 검사한다. 구현 전에는 건너뛴다.
     """
 
     name = "nfp"

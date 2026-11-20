@@ -1,9 +1,9 @@
-"""계약 테스트. 비교 대상 세 방법(삼각법, NFP, 래스터)이 모두 지켜야 하는 입출력 규칙.
+"""제약 검사 테스트. 비교 대상 세 방법(삼각법, NFP, 래스터)이 모두 지켜야 하는 입출력 규칙.
 
-pytest -q tests/test_contract.py
+pytest -q tests/test_constraints.py
 아직 구현되지 않은 방법(place가 NotImplementedError)은 건너뛴다. 구현하면 자동으로 검사된다.
 
-검사 항목 (1번은 test_placer_registered, 7번은 test_deterministic, 나머지는 nesting/contract.py)
+검사 항목 (1번은 test_placer_registered, 7번은 test_deterministic, 나머지는 nesting/constraints.py)
   1. 공통 실행 틀의 Placer를 상속하고 이름이 등록 이름과 같다
   2. 부품 사본마다 배치가 정확히 하나 있다 (개수, 사본 번호 0..수량-1)
   3. 배치 순서와 회전이 fixed_sequence와 같다 (순서 고정 규칙)
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import algorithms  # noqa: E402
-from nesting import contract  # noqa: E402
+from nesting import constraints  # noqa: E402
 from nesting.model import Instance  # noqa: E402
 from nesting.runner import Placer  # noqa: E402
 
@@ -82,10 +82,10 @@ def test_placer_registered(name):
 
 @pytest.mark.parametrize("case", list(CASES))
 @pytest.mark.parametrize("name", algorithms.COMPARED)
-def test_contract(name, case):
+def test_constraints(name, case):
     inst = CASES[case]()
     sol = _solve(name, inst)
-    errs = contract.check(inst, sol, name, algorithms.get_placer(name).REQUIRED_COUNTERS)
+    errs = constraints.check(inst, sol, name, algorithms.get_placer(name).REQUIRED_COUNTERS)
     assert not errs, "\n".join(errs)
 
 

@@ -1,11 +1,11 @@
-"""비교 대상 방법을 선정 인스턴스에 돌려 계약 검사, 수치표, 배치 그림을 한 페이지로 만든다.
+"""비교 대상 방법을 선정 인스턴스에 돌려 제약 검사, 수치표, 배치 그림을 한 페이지로 만든다.
 
 python tools/report.py                      # 구현된 방법 전부, 시간 5회 반복
 python tools/report.py trig --repeat 3      # 삼각법만
 python tools/report.py trig nfp -o results/
 
 출력 (기본 results/)
-  report.html        계약 검사 결과, 수치표, 인스턴스별 배치 그림
+  report.html        제약 검사 결과, 수치표, 인스턴스별 배치 그림
   <방법>.csv          보고서 결과표 열 순서와 같은 수치
 
 세 방법 모두 결정적이므로 사용 길이와 활용률은 첫 실행 값을 쓰고, 시간은 repeat회 평균이다.
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import algorithms  # noqa: E402
-from nesting import contract  # noqa: E402
+from nesting import constraints  # noqa: E402
 from nesting import geometry as g  # noqa: E402
 from nesting.model import Instance, Solution  # noqa: E402
 
@@ -63,7 +63,7 @@ def run_one(name, inst, repeat):
     req = algorithms.get_placer(name).REQUIRED_COUNTERS
     sols = [nest(inst) for _ in range(repeat)]
     sol = sols[0]
-    errs = contract.check(inst, sol, name, req)
+    errs = constraints.check(inst, sol, name, req)
     if any(s.placements != sol.placements for s in sols[1:]):
         errs.append("반복 실행 결과가 다름 (결정적이지 않음)")
     t_all = [s.stats["time_place_ms"] for s in sols]
@@ -115,14 +115,14 @@ def page(results, repeat):
         n_ok = sum(not r["errors"] for r in rows)
         cls = "ok" if n_ok == len(rows) else "ng"
         out.append(
-            f"<h2>{NAMES.get(name, name)} ({name}) <span class='badge {cls}'>계약 검사 {n_ok}/{len(rows)} 통과</span></h2>"
+            f"<h2>{NAMES.get(name, name)} ({name}) <span class='badge {cls}'>제약 만족 {n_ok}/{len(rows)}</span></h2>"
         )
         ckeys = list(rows[0]["counters"]) if rows else []
         out.append("<div class='wrap'><table><tr><th>인스턴스</th><th>부품 수</th><th>사용 길이</th>")
         out.append("<th>하한 대비</th><th>활용률(%)</th><th>전체 시간(ms)</th><th>가능 위치 계산(ms)</th><th>비율</th>")
-        out.append("".join(f"<th>{k}</th>" for k in ckeys) + "<th>계약</th></tr>")
+        out.append("".join(f"<th>{k}</th>" for k in ckeys) + "<th>제약 만족</th></tr>")
         for r in rows:
-            mark = "<span class='badge ok'>통과</span>" if not r["errors"] else "<span class='badge ng'>위반</span>"
+            mark = "<span class='badge ok'>만족</span>" if not r["errors"] else "<span class='badge ng'>위반</span>"
             out.append(
                 f"<tr><td>{r['instance']}</td><td>{r['pieces']}</td><td>{r['length']:.6g}</td>"
                 f"<td>+{r['lb_gap']:.1f}%</td><td>{r['util']:.1f}</td>"
@@ -167,10 +167,10 @@ def main():
                 print(f"{name}: 미구현, 건너뜀")
                 break
             rows.append(r)
-            status = "통과" if not r["errors"] else "위반 " + "; ".join(r["errors"])
+            status = "만족" if not r["errors"] else "위반 " + "; ".join(r["errors"])
             print(
                 f"{name:6s} {r['instance']:9s} L={r['length']:<10.6g} U={r['util']:5.1f}% "
-                f"{r['time_ms']:8.1f}ms 가능위치 {r['feas_pct']:5.1f}%  계약 {status}"
+                f"{r['time_ms']:8.1f}ms 가능위치 {r['feas_pct']:5.1f}%  제약 {status}"
             )
         if rows:
             results[name] = rows

@@ -1,7 +1,7 @@
 """알고리즘 하나를 인스턴스 하나에 실행하고, 검증한 뒤 결과를 저장한다.
 
 python tools/run.py baseline data/instances/sparrow/fu.json -o results/fu_baseline.json
-python tools/run.py ga data/instances/sparrow/shirts.json --seed 3 --time-limit 60 -o results/x.json
+python tools/run.py trig data/instances/sparrow/shirts.json -o results/shirts_trig.json
 python tools/run.py baseline experiments/selected.txt -o results/   # 선정 인스턴스 전체
 """
 

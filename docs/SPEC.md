@@ -132,7 +132,7 @@ python tools/validate.py <instance.json> <solution.json> [--spacing 0.5]
 
 각 폴더의 `__init__.py`에 원리, 배치 절차, 구현 메모가 있다.
 
-### 5.2 공통 실행 틀과 계약
+### 5.2 공통 실행 틀과 제약 검사
 
 세 방법은 공통 실행 틀(`nesting/runner.py`) 위에서 돈다. 담당자는 `Placer`를 상속해 `place()` 하나만 구현한다.
 
@@ -168,7 +168,7 @@ def nest(inst, *, seed=0, time_limit_s=None, **params) -> Solution:
 `feasible_timer`는 생성기 기반 contextmanager를 쓰지 않는다. 호출마다 수 마이크로초가 들어 비율을 왜곡했기 때문이다
 (삼각법 shirts에서 97.8%가 91%로 측정됨). 객체 하나를 재사용해 오버헤드를 줄였다.
 
-계약 테스트(`tests/test_contract.py`, 검사 내용은 `nesting/contract.py`)는 세 방법 모두에 같은 규칙을 검사한다.
+제약 검사 테스트(`tests/test_constraints.py`, 검사 내용은 `nesting/constraints.py`)는 세 방법 모두에 같은 규칙을 검사한다.
 구현 전인 방법은 건너뛰고, 구현하면 자동으로 검사된다.
 
 1. `Placer`를 상속하고 이름이 등록 이름과 같다

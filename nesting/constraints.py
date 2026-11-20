@@ -1,7 +1,7 @@
-"""계약 검사. 비교 대상 방법의 결과가 공통 입출력 규칙을 지키는지 확인한다.
+"""제약 검사. 비교 대상 방법의 결과가 팀이 정한 공통 규칙(제약)을 지키는지 확인한다.
 
-tests/test_contract.py와 tools/report.py가 함께 쓴다. 위반 사항을 문장 목록으로 돌려주며,
-빈 목록이면 통과다.
+tests/test_constraints.py와 tools/report.py가 함께 쓴다. 위반 사항을 문장 목록으로 돌려주며,
+빈 목록이면 제약을 모두 만족한 것이다.
 """
 
 from __future__ import annotations
