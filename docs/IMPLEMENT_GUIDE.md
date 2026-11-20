@@ -44,33 +44,69 @@ AI 도구(Claude, ChatGPT, Copilot 등)와 함께 작업한다면 이 문서 전
 
 ## 2. 시작하기 (처음 한 번)
 
-Python **3.11**이 필요하다(CI가 3.11로 돈다).
+### 2.1 준비물
+
+- **Python 3.11** (CI가 3.11로 돈다). 3.12 이상만 있으면 3.11을 따로 설치한다.
+  설치 후 확인: Windows `py -3.11 --version`, macOS/Linux `python3.11 --version`
+- **git**, 그리고 GitHub 계정
+- **저장소 쓰기 권한**: taaez가 보낸 GitHub collaborator 초대를 메일이나 github.com/notifications에서 수락한다.
+  수락하지 않으면 clone과 테스트는 되지만 push가 거부된다.
+
+git을 처음 쓰는 컴퓨터라면 커밋에 남을 이름과 메일을 한 번 설정한다.
+
+```bash
+git config --global user.name "GitHub 아이디"
+git config --global user.email "GitHub에 등록한 메일"
+```
+
+### 2.2 받기, 설치, 테스트
 
 ```bash
 git clone https://github.com/taaez/SheetNest.git
 cd SheetNest
-python -m venv .venv
-# Windows:      .venv\Scripts\activate
-# macOS/Linux:  source .venv/bin/activate
+
+# 가상환경 만들기 (3.11로)
+py -3.11 -m venv .venv          # Windows
+python3.11 -m venv .venv        # macOS/Linux
+
+# 가상환경 켜기 (터미널을 새로 열 때마다)
+.venv\Scripts\activate          # Windows (cmd, PowerShell)
+source .venv/bin/activate       # macOS/Linux
+
+python --version                # Python 3.11.x 가 나와야 한다
 pip install -r requirements.txt
 python examples/make_examples.py
 pytest
 ```
 
-정상이면 마지막 줄이 점(.)과 s로 끝난다. s는 아직 구현 안 된 NFP와 래스터 검사를 건너뛴 것이다.
+- Windows PowerShell에서 activate가 "스크립트를 실행할 수 없습니다"로 막히면 한 번만
+  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` 를 실행하고 다시 켠다.
+- 가상환경을 켜면 터미널 앞에 `(.venv)`가 붙는다. 이후 `python`, `pip`, `pytest`, `ruff`는 모두 이 상태에서 쓴다.
+- `pytest`가 정상이면 마지막 줄이 `56 passed, 10 skipped`처럼 나온다(개수는 코드가 늘면 바뀐다).
+  failed가 없으면 된다. skipped는 아직 구현 안 된 NFP와 래스터 검사를 건너뛴 것이다.
+
+### 2.3 지금 상태 눈으로 보기
 
 ```bash
-python tools/report.py trig --repeat 1     # 삼각법 7개 실행, results/report.html 생성
+python tools/report.py trig --repeat 1     # 삼각법 7개 실행 (1분 안쪽), results/report.html 생성
 ```
 
-`results/report.html`을 브라우저로 열면 수치표와 배치 그림을 볼 수 있다. 처음에 한 번 열어 보고 무엇을 만들어야 하는지 감을 잡는다.
+`results/report.html`을 브라우저로 열면 수치표와 배치 그림을 볼 수 있다. 무엇을 만들어야 하는지 감을 잡는 용도다.
+구현 전에 `python tools/report.py nfp`를 돌리면 "nfp: 미구현, 건너뜀"이 나오고,
+`python tools/run.py nfp ...`는 `NotImplementedError: NFP 미구현`으로 끝난다. 정상이다.
 
-작업은 자기 브랜치에서 한다.
+### 2.4 내 브랜치 만들기
 
 ```bash
 git switch main && git pull
 git switch -c 이름/nfp        # 예: yujin/nfp, seungsu/raster
+# ... 작업 ...
+ruff format . && ruff check . && pytest
+git add -A && git commit -m "nfp: 볼록 다각형 민코프스키 합 구현"
+git push -u origin 이름/nfp    # 처음 한 번만 -u, 이후에는 git push
 ```
+
+push하면 GitHub Actions(CI)가 자동으로 검사한다. 저장소 Actions 탭에서 초록 체크인지 확인한다.
 
 ## 3. 공통 실행 틀 (`nesting/runner.py`)
 
@@ -256,7 +292,7 @@ python tools/run.py nfp data/instances/sparrow/fu.json   # 인스턴스 하나�
 - [ ] `pytest`에서 내 방법의 제약 검사가 건너뛰지 않고 모두 통과
 - [ ] `python tools/report.py <방법>`에서 7개 모두 "제약 만족"
 - [ ] `ruff format .`와 `ruff check .` 통과 (CI가 검사함)
-- [ ] 자기 브랜치에 push하고 CI 초록색 확인
+- [ ] 자기 브랜치에 push하고 CI 초록 체크 확인
 - [ ] PR로 main에 합치기
 - [ ] `results/<방법>.csv`를 1번(실험 총괄)에게 전달, 보고서 4장 내 파트 작성(보고서 양식 참고)
 

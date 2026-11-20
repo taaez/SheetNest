@@ -7,15 +7,17 @@ Python **3.11**을 설치한 뒤:
 ```bash
 git clone https://github.com/taaez/SheetNest.git
 cd SheetNest
-python -m venv .venv
+py -3.11 -m venv .venv          # Windows (macOS/Linux: python3.11 -m venv .venv)
 # Windows:  .venv\Scripts\activate
 # macOS/Linux:  source .venv/bin/activate
+python --version                # 3.11.x 확인
 pip install -r requirements.txt
 python examples/make_examples.py
 pytest
 ```
 
-`pytest`가 모두 통과하면 준비 완료.
+`pytest`에 failed가 없으면 준비 완료. push하려면 저장소 collaborator 초대를 먼저 수락한다.
+자세한 처음 설정은 [docs/IMPLEMENT_GUIDE.md](docs/IMPLEMENT_GUIDE.md) 2절.
 
 ## 2. 브랜치
 
