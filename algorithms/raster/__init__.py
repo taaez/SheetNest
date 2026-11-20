@@ -26,7 +26,34 @@
 """
 
 from nesting.model import Instance, Solution
+from nesting.runner import Placer, run
+
+
+class RasterPlacer(Placer):
+    """구현할 것은 place()와 counters() 두 개다. 사용법은 nesting/runner.py 맨 위 설명 참고.
+
+    place(item, rotation)
+        self.rotated(item, rotation)으로 회전한 다각형을 얻고, 가능 위치 계산 부분을
+        with self.feasible_timer(): 로 감싼 뒤 Bottom-Left 규칙(x 최소, 같으면 y 최소)으로
+        고른 (x, y)를 돌려준다. 놓은 부품은 다음 부품 계산을 위해 self에 기록해 둔다.
+    counters()
+        REQUIRED_COUNTERS의 키를 모두 담은 dict를 돌려준다.
+
+    tests/test_contract.py가 이 클래스를 자동으로 검사한다. 구현 전에는 건너뛴다.
+    """
+
+    name = "raster"
+    REQUIRED_COUNTERS = ("cell_size", "grid_checks")
+
+    def __init__(self, inst, **params):
+        super().__init__(inst, **params)
+
+    def place(self, item: int, rotation: float) -> tuple[float, float]:
+        raise NotImplementedError("래스터 미구현")
+
+    def counters(self):
+        return {}
 
 
 def nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution:
-    raise NotImplementedError("래스터 미구현")
+    return run(inst, RasterPlacer, **params)

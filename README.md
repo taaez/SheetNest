@@ -18,6 +18,8 @@ nesting/
   geometry.py        기본 기하 연산: 면적, 회전, 선분 교차, 점-다각형 판정, 정규화
   collision.py       다각형 겹침 판정 (삼각법의 핵심, 검증기도 사용) + 계산량 집계
   sequence.py        고정 배치 순서: 면적 큰 순 + 들어가는 첫 회전
+  runner.py          공통 실행 틀: Placer(place()만 구현) + run(순서 고정, 시간 측정, 결과 생성)
+  contract.py        계약 검사: 세 방법이 지켜야 하는 입출력 규칙
   validate.py        해 검증기
   model.py           Instance / Solution 형식, 저장·불러오기, 형식 검사
   io/                변환기: sparrow JSON, ESICUP XML, DXF, SVG
@@ -30,6 +32,7 @@ experiments/         selected.txt(실험 인스턴스 7개), 실험 설명
 web/                 웹 데모 (구조 미정)
 tools/
   run.py             알고리즘 실행 + 검증 + 저장
+  report.py          선정 7개 실행 → 계약 검사, 수치표, 배치 그림 HTML + CSV (results/)
   validate.py        solution 검증
   convert.py         파일 1개 → 공통 instance JSON
   build_datasets.py  sparrow·ESICUP 저장소 일괄 변환 + 교차 검증
@@ -70,10 +73,15 @@ python tools/build_datasets.py --sparrow ../sparrow --esicup ../esicup-datasets
 
 ## 알고리즘 작성 규칙
 
-1. 시그니처: `nest(inst: Instance, *, seed=0, time_limit_s=None, **params) -> Solution`
-2. 배치 순서는 `nesting.sequence.fixed_sequence(inst)`, 위치 선택은 Bottom-Left (x 최소, 같으면 y 최소)
-3. stats에 `time_place_ms`, `time_feasible_ms`와 방법별 계산량을 기록
-4. 결과는 `make_solution()`으로 만들고 `python tools/run.py <알고리즘> experiments/selected.txt`로 검증기 OK 확인
+구현할 것은 `nesting.runner.Placer`를 상속한 클래스의 `place(item, rotation) -> (x, y)` 하나다.
+순서 고정, 사본 번호, 시간 측정, Solution 생성은 공통 실행 틀이 세 방법에 똑같이 처리한다.
+`algorithms/nfp`, `algorithms/raster`에 빈 클래스가 있고, 완성된 예시는 `algorithms/trig/decoder.py`다.
+
+1. 가능 위치 계산 부분은 `with self.feasible_timer():`로 감싼다 (stats의 `time_feasible_ms`가 됨)
+2. 위치 선택은 Bottom-Left (x 최소, 같으면 y 최소)
+3. `counters()`로 방법별 계산량(`REQUIRED_COUNTERS`)을 돌려준다
+4. `pytest -q tests/test_contract.py` 통과 (구현 전에는 자동으로 건너뜀)
+5. `python tools/report.py <방법>`으로 7개 인스턴스 수치와 배치 그림 확인
 
 자세한 규칙은 [docs/SPEC.md](docs/SPEC.md) 5절.
 

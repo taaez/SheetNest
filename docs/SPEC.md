@@ -132,16 +132,55 @@ python tools/validate.py <instance.json> <solution.json> [--spacing 0.5]
 
 각 폴더의 `__init__.py`에 원리, 배치 절차, 구현 메모가 있다.
 
-### 5.2 알고리즘 함수
+### 5.2 공통 실행 틀과 계약
+
+세 방법은 공통 실행 틀(`nesting/runner.py`) 위에서 돈다. 담당자는 `Placer`를 상속해 `place()` 하나만 구현한다.
 
 ```python
-def nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution: ...
+class NFPPlacer(Placer):
+    name = "nfp"
+    REQUIRED_COUNTERS = ("nfp_computed", "nfp_cache_hits", "candidate_evals")
+
+    def place(self, item: int, rotation: float) -> tuple[float, float]:
+        poly = self.rotated(item, rotation)  # 원점 기준으로 회전한 다각형
+        with self.feasible_timer():  # 가능 위치 계산 구간
+            ...  # Bottom-Left로 (x, y) 결정
+        ...  # 놓은 부품을 내부 상태에 기록
+        return x, y
+
+    def counters(self) -> dict: ...
+
+
+def nest(inst, *, seed=0, time_limit_s=None, **params) -> Solution:
+    return run(inst, NFPPlacer, **params)
 ```
 
-- `algorithms/<이름>/__init__.py`에 구현하고 `algorithms/__init__.py`의 `REGISTRY`에 등록한다.
-- 배치 순서는 반드시 `nesting.sequence.fixed_sequence(inst)`를 쓴다. 세 방법의 차이가 가능 위치 계산에서만 나오게 하기 위함이다.
-- 결과는 `nesting.model.make_solution()`으로 만든다(length·utilization 계산 통일).
-- 결과는 `nesting.validate.validate`를 통과해야 한다. 검증기는 삼각법과 같은 겹침 판정 코드를 쓰지만 독립적으로 전체를 다시 검사한다.
+| 공통 실행 틀이 하는 일 | 방법이 하는 일 |
+|---|---|
+| `fixed_sequence`로 순서와 회전 고정, 부품을 하나씩 `place()`에 넘김 | 가능 위치 계산, Bottom-Left 선택 |
+| 사본 번호 부여, `Placement` 생성 | 놓은 부품 기록 |
+| 전체 시간 측정, `feasible_timer` 구간 합산 | 가능 위치 계산을 `feasible_timer`로 감싸기 |
+| `make_solution`으로 length, utilization 계산 | 계산량(`counters`) 집계 |
+
+`place()`가 돌려주는 (x, y)는 `Placement`의 x, y와 같다. 원래 다각형을 원점 기준으로 rotation도 반시계 회전한 뒤
+(x, y)만큼 옮긴 것이 최종 위치다. 원판 폭은 y 방향, 길이는 x 방향이다.
+
+`feasible_timer`는 생성기 기반 contextmanager를 쓰지 않는다. 호출마다 수 마이크로초가 들어 비율을 왜곡했기 때문이다
+(삼각법 shirts에서 97.8%가 91%로 측정됨). 객체 하나를 재사용해 오버헤드를 줄였다.
+
+계약 테스트(`tests/test_contract.py`, 검사 내용은 `nesting/contract.py`)는 세 방법 모두에 같은 규칙을 검사한다.
+구현 전인 방법은 건너뛰고, 구현하면 자동으로 검사된다.
+
+1. `Placer`를 상속하고 이름이 등록 이름과 같다
+2. 부품 사본마다 배치가 정확히 하나 있다
+3. 배치 순서와 회전이 `fixed_sequence`와 같다
+4. 검증기를 통과한다
+5. 필수 stats 키(공통 키와 `REQUIRED_COUNTERS`)가 있다
+6. 0 < `time_feasible_ms` ≤ `time_place_ms`
+7. 결정적이다
+
+`python tools/report.py [방법...]`은 선정 7개 인스턴스에 같은 검사를 돌리고 수치표와 배치 그림을 `results/report.html`로,
+결과표 수치를 `results/<방법>.csv`로 저장한다.
 
 ### 5.3 시간·계산량 기록 (필수)
 

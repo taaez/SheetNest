@@ -7,6 +7,8 @@
 
 모든 알고리즘은 같은 형태의 함수를 제공한다.
     nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution
+비교 대상 세 방법은 공통 실행 틀(nesting/runner.py)의 Placer를 상속해 place()만 구현하고,
+tests/test_contract.py의 계약 테스트를 통과해야 한다.
 """
 
 from importlib import import_module
@@ -25,3 +27,14 @@ def get(name: str):
     if name not in REGISTRY:
         raise KeyError(f"알 수 없는 알고리즘 {name}. 가능: {', '.join(REGISTRY)}")
     return import_module(REGISTRY[name]).nest
+
+
+def get_placer(name: str):
+    """비교 대상 방법의 Placer 클래스 (계약 테스트, 리포트용)."""
+    from nesting.runner import Placer
+
+    mod = import_module(REGISTRY[name])
+    for v in vars(mod).values():
+        if isinstance(v, type) and issubclass(v, Placer) and v is not Placer and v.name == name:
+            return v
+    raise KeyError(f"{name}: Placer 클래스를 찾지 못함")

@@ -58,6 +58,8 @@ ruff check . --fix
 ## 5. 공통 모듈 규칙
 
 - 배치 순서는 `nesting/sequence.py`의 고정 순서만 쓴다. 위치 선택은 Bottom-Left로 통일한다.
-- 결과는 `make_solution()`으로 만들고, 검증기(`nesting/validate.py`)를 통과해야 한다.
+- 비교 대상 방법은 `nesting/runner.py`의 `Placer`를 상속해 `place()`만 구현하고 `run()`으로 실행한다.
+  시간 측정과 결과 생성을 각자 따로 만들지 않는다.
+- `tests/test_contract.py`(계약 테스트)를 통과해야 main에 올린다. CI에서 자동으로 돈다.
 - `nesting/`, `docs/SPEC.md`를 바꾸면 팀 대화방에 공지한다 (모두의 코드에 영향).
-- 알고리즘 결과는 `tools/run.py`로 실행해 검증기 OK를 확인한다.
+- 알고리즘 결과는 `tools/report.py <방법>`으로 7개 인스턴스 수치와 배치 그림을 확인한다.

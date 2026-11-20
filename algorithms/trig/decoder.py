@@ -11,61 +11,56 @@
 3) 미끄러뜨리기(slide=True 기본): 아래로, 왼쪽으로 겹치기 직전까지 반복해서 민다(이진 탐색)
 
 결정적 알고리즘이다. 같은 순서면 항상 같은 결과가 나온다.
-시간 기록: time_feasible_ms(겹침 판정에 쓴 시간), time_place_ms(배치 전체 시간)
+공통 실행 틀(nesting.runner)의 Placer를 상속한다. 시간 기록은 틀이 처리한다.
+계산량: overlap_checks(정밀 겹침 판정 횟수), bbox_rejects(박스 단계에서 걸러진 횟수)
 """
 
 from __future__ import annotations
 
-import time
-from collections.abc import Sequence
-
 from nesting import collision as c
 from nesting import geometry as g
-from nesting.model import Instance, Placement, Solution, make_solution
+from nesting.runner import Placer
 
 
-class TrigPlacer:
-    def __init__(self, inst: Instance, slide: bool = True, slide_iters: int = 4, resolution: float | None = None):
-        self.inst = inst
-        self.W = inst.sheet_width
+class TrigPlacer(Placer):
+    name = "trig"
+    REQUIRED_COUNTERS = ("overlap_checks", "bbox_rejects")
+
+    def __init__(self, inst, slide: bool = True, slide_iters: int = 4, resolution: float | None = None, **params):
+        super().__init__(inst, slide=slide, slide_iters=slide_iters, resolution=resolution, **params)
         self.eps = c.tolerance_for(self.W)
         self.slide = slide
         self.slide_iters = slide_iters
         # 미끄러뜨리기 이진 탐색의 최소 이동 단위 (기본: 원판 폭의 1/1000)
         self.res = resolution if resolution is not None else self.W * 1e-3
-        self.t_feasible = 0.0
-        self._rot: dict[tuple[int, float], tuple[list[list[float]], float, float, float, float]] = {}
-        for it in inst.items:
-            for r in it.rotations:
-                poly = g.rotate(it.polygon, r)
-                minx, miny, maxx, maxy = g.bbox(poly)
-                self._rot[(it.id, r)] = (poly, minx, miny, maxx - minx, maxy - miny)
+        self.placed: list[c.Shape] = []
+        self._box: dict[tuple[int, float], tuple[float, float, float, float]] = {}
+        c.reset_stats()
 
-    def place_all(self, sequence: Sequence[tuple[int, float]]) -> list[Placement]:
-        placed: list[c.Shape] = []
-        placements: list[Placement] = []
-        copies: dict[int, int] = {}
-        for item, rot in sequence:
-            poly, minx, miny, w, h = self._rot[(item, rot)]
-            if h > self.W + self.eps:
-                raise ValueError(f"item {item} 회전 {rot}: 원판 폭보다 높음")
-            X, Y = self._first_feasible(poly, minx, miny, w, h, placed)
-            if self.slide:
-                X, Y = self._slide(poly, minx, miny, w, h, X, Y, placed)
-            x, y = X - minx, Y - miny
-            placed.append(c.Shape(g.translate(poly, x, y)))
-            k = copies.get(item, 0)
-            copies[item] = k + 1
-            placements.append(Placement(item=item, copy=k, rotation=rot, x=x, y=y))
-        return placements
+    def counters(self):
+        return c.get_stats()
+
+    def place(self, item: int, rotation: float) -> tuple[float, float]:
+        poly = self.rotated(item, rotation)
+        key = (item, rotation)
+        if key not in self._box:
+            minx, miny, maxx, maxy = g.bbox(poly)
+            self._box[key] = (minx, miny, maxx - minx, maxy - miny)
+        minx, miny, w, h = self._box[key]
+        if h > self.W + self.eps:
+            raise ValueError(f"item {item} 회전 {rotation}: 원판 폭보다 높음")
+        X, Y = self._first_feasible(poly, minx, miny, w, h, self.placed)
+        if self.slide:
+            X, Y = self._slide(poly, minx, miny, w, h, X, Y, self.placed)
+        x, y = X - minx, Y - miny
+        self.placed.append(c.Shape(g.translate(poly, x, y)))
+        return x, y
 
     # ------------------------------------------------------------ 가능 위치 계산 (겹침 직접 판정)
     def _feasible(self, poly, minx, miny, w, h, X, Y, placed) -> bool:
         """바운딩 박스 왼쪽 아래가 (X, Y)일 때 원판 안이고 겹치지 않는가."""
-        t0 = time.perf_counter()
-        ok = self._feasible_inner(poly, minx, miny, w, h, X, Y, placed)
-        self.t_feasible += time.perf_counter() - t0
-        return ok
+        with self.feasible_timer():
+            return self._feasible_inner(poly, minx, miny, w, h, X, Y, placed)
 
     def _feasible_inner(self, poly, minx, miny, w, h, X, Y, placed) -> bool:
         eps = self.eps
@@ -142,20 +137,3 @@ class TrigPlacer:
             if moved <= self.res:
                 break
         return X, Y
-
-
-def run(inst: Instance, sequence, *, slide: bool = True, **params) -> Solution:
-    """고정 순서로 배치하고 Solution을 만든다. 시간과 계산량을 stats에 남긴다."""
-    c.reset_stats()
-    t0 = time.perf_counter()
-    placer = TrigPlacer(inst, slide=slide, **params)
-    placements = placer.place_all(sequence)
-    total = time.perf_counter() - t0
-    stats = {
-        **c.get_stats(),
-        "time_place_ms": total * 1000,
-        "time_feasible_ms": placer.t_feasible * 1000,
-        "slide": slide,
-        "params": params,
-    }
-    return make_solution(inst, "trig", placements, total * 1000, stats)

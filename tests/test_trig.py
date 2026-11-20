@@ -9,8 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import algorithms  # noqa: E402
-from algorithms.trig import TrigPlacer, run  # noqa: E402
+from algorithms.trig import TrigPlacer  # noqa: E402
 from nesting.model import Instance  # noqa: E402
+from nesting.runner import run  # noqa: E402
 from nesting.sequence import fixed_sequence  # noqa: E402
 from nesting.validate import validate  # noqa: E402
 
@@ -80,6 +81,6 @@ def test_trig_valid_and_beats_baseline(path):
 
 def test_run_with_sequence_matches_nest():
     inst = Instance.load(ROOT / "data/instances/sparrow/fu.json")
-    a = run(inst, fixed_sequence(inst))
+    a = run(inst, TrigPlacer, sequence=fixed_sequence(inst))
     b = algorithms.get("trig")(inst)
     assert a.placements == b.placements
