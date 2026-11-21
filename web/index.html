@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SheetNest 판재 절단 배치 비교</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>SheetNest</h1>
+    <p class="lead">도면의 조각들을 폭이 정해진 원판에 겹치지 않게 놓고, 사용한 길이를 비교합니다.
+      놓는 순서와 위치 고르는 규칙은 같고, 놓을 수 있는 위치를 계산하는 방법만 다릅니다.</p>
+    <p id="engine" class="engine" role="status" aria-live="polite">Python 실행 환경을 불러오는 중</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="setup" aria-label="실행 준비">
+    <div class="panel">
+      <h2>도면</h2>
+      <label class="field">
+        <span>준비된 도면</span>
+        <select id="instance" disabled></select>
+      </label>
+      <p id="instance-note" class="hint"></p>
+
+      <details id="upload">
+        <summary>내 도면 올리기</summary>
+        <label class="field">
+          <span>파일 (JSON, DXF, SVG)</span>
+          <input id="file" type="file" accept=".json,.dxf,.svg,.xml">
+        </label>
+        <div class="row">
+          <label class="field">
+            <span>원판 폭</span>
+            <input id="opt-width" type="number" min="0" step="any" placeholder="도면 단위">
+          </label>
+          <label class="field">
+            <span>허용 회전</span>
+            <select id="opt-rot">
+              <option value="0,90,180,270">0, 90, 180, 270도</option>
+              <option value="0,180">0, 180도</option>
+              <option value="0">회전 없음</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>SVG 단위</span>
+            <select id="opt-unit">
+              <option>mm</option><option>cm</option><option>in</option><option>px</option>
+            </select>
+          </label>
+        </div>
+        <button id="upload-go" type="button" class="quiet" disabled>이 파일 불러오기</button>
+        <p class="hint">DXF와 SVG는 원판 폭을 적어야 합니다. 도면에 SHEET 레이어나 id가 sheet인 사각형이 있으면 그 높이를 폭으로 씁니다.</p>
+      </details>
+
+      <div id="summary" class="summary" hidden></div>
+      <div id="parts" class="parts" aria-label="조각 모양"></div>
+    </div>
+
+    <div class="panel">
+      <h2>계산 방법</h2>
+      <div id="methods" class="methods"></div>
+      <button id="run" type="button" class="primary" disabled>배치 실행</button>
+      <p id="run-note" class="hint">시간은 이 브라우저에서 잰 값입니다. 보고서의 수치는 같은 코드를 PC에서 돌린 값이라 더 빠릅니다.</p>
+    </div>
+  </section>
+
+  <section id="results" class="results" hidden aria-label="결과">
+    <h2>비교</h2>
+    <div class="table-wrap">
+      <table id="table">
+        <thead>
+          <tr>
+            <th scope="col">방법</th>
+            <th scope="col">사용 길이</th>
+            <th scope="col">하한 대비</th>
+            <th scope="col">활용률</th>
+            <th scope="col">전체 시간</th>
+            <th scope="col" class="bar-col">가능 위치 계산이 차지한 시간</th>
+            <th scope="col">계산량</th>
+            <th scope="col">검증</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="legend"><span class="sw core"></span>가능 위치 계산 <span class="sw rest"></span>그 밖의 처리.
+      막대 길이는 가장 오래 걸린 방법을 기준으로 맞췄습니다.</p>
+
+    <div class="play">
+      <h2>배치 결과</h2>
+      <div class="scrub">
+        <button id="play" type="button" class="quiet">놓는 순서 재생</button>
+        <input id="step" type="range" min="0" max="0" value="0" aria-label="놓은 조각 수">
+        <output id="step-out"></output>
+      </div>
+      <p class="hint">세 방법은 같은 조각을 같은 순서로 놓습니다. 모든 그림은 같은 축척이라 오른쪽 끝이 짧을수록 원판을 덜 쓴 것입니다.</p>
+    </div>
+    <div id="strips" class="strips"></div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p>동국대학교 알고리즘 4조. 코드와 실험 데이터는
+    <a href="https://github.com/taaez/SheetNest">github.com/taaez/SheetNest</a>에 있습니다.</p>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

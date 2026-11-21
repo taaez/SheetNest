@@ -11,3 +11,5 @@ examples/sample_parts.dxf
 examples/sample_parts.svg
 results/
 *.log
+# 웹 빌드 결과 (python tools/build_web.py)
+site/
