@@ -1,4 +1,4 @@
-"""가능 위치 계산 방법 2. No-Fit Polygon(NFP). 구현 예정.
+"""가능 위치 계산 방법 2. No-Fit Polygon(NFP). 구현: placer.py(배치), geometry_nfp.py(볼록 분할, 민코프스키 합).
 
 원리
   고정된 부품 A와 놓을 부품 B가 있을 때, B의 기준점이 들어가면 A와 겹치게 되는 영역이 NFP다.
@@ -30,31 +30,32 @@
 from nesting.model import Instance, Solution
 from nesting.runner import Placer, run
 
+from .placer import NFPCore
+
 
 class NFPPlacer(Placer):
-    """구현할 것은 place()와 counters() 두 개다. 사용법은 nesting/runner.py 맨 위 설명 참고.
-
-    place(item, rotation)
-        self.rotated(item, rotation)으로 회전한 다각형을 얻고, 가능 위치 계산 부분을
-        with self.feasible_timer(): 로 감싼 뒤 Bottom-Left 규칙(x 최소, 같으면 y 최소)으로
-        고른 (x, y)를 돌려준다. 놓은 부품은 다음 부품 계산을 위해 self에 기록해 둔다.
-    counters()
-        REQUIRED_COUNTERS의 키를 모두 담은 dict를 돌려준다.
-
-    tests/test_constraints.py가 이 클래스를 자동으로 검사한다. 구현 전에는 건너뛴다.
-    """
+    """NFP로 가능 위치를 계산하는 Placer. 계산 본체는 placer.NFPCore에 있다."""
 
     name = "nfp"
     REQUIRED_COUNTERS = ("nfp_computed", "nfp_cache_hits", "candidate_evals")
 
     def __init__(self, inst, **params):
         super().__init__(inst, **params)
+        self.core = NFPCore(inst)  # 부품마다 볼록 분할 (한 번)
 
     def place(self, item: int, rotation: float) -> tuple[float, float]:
-        raise NotImplementedError("NFP 미구현")
+        with self.feasible_timer():  # NFP 생성(캐시) + 후보점 계산·판정
+            x, y = self.core.best_position(item, rotation)
+        self.core.record(item, rotation, x, y)
+        return x, y
 
     def counters(self):
-        return {}
+        return {
+            "nfp_computed": self.core.nfp_computed,
+            "nfp_cache_hits": self.core.nfp_cache_hits,
+            "candidate_evals": self.core.candidate_evals,
+            "convex_pieces": sum(self.core.n_pieces.values()),
+        }
 
 
 def nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution:
