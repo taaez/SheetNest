@@ -589,7 +589,7 @@ function onDownload(ev) {
     if (k) download(`${base}_mm.svg`, cutSvg(r, s.width, "mm", k * 10), "image/svg+xml");
     else download(`${base}.svg`, cutSvg(r, s.width, s.unit), "image/svg+xml");
   } else if (b.dataset.act === "dxf") {
-    if (k) download(`${base}_mm.dxf`, dxf(r, s.width, k * 10), "application/dxf");
+    if (k) download(`${base}_mm.dxf`, dxf(r, s.width, k * 10, "mm"), "application/dxf");
     else download(`${base}.dxf`, dxf(r, s.width), "application/dxf");
   } else {
     download(`${base}_solution.json`, JSON.stringify(r.solution, null, 1), "application/json");

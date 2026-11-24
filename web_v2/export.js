@@ -104,10 +104,12 @@ export function cutSvg(result, width, unit, scale = 1) {
 
 /**
  * DXF(R12 ASCII): PARTS 레이어에 닫힌 폴리라인, SHEET 레이어에 사용한 원판 사각형. y축은 도면 그대로 위쪽이 +.
- * scale은 cutSvg와 같다. R12에는 단위 정보가 없으므로 받는 쪽 CAD에서 mm로 열면 된다.
+ * scale은 cutSvg와 같다. units="mm"이면 HEADER에 $INSUNITS를 넣는다(R12 이전 프로그램은 이 값을 무시한다).
  */
-export function dxf(result, width, scale = 1) {
-  const lines = ["0", "SECTION", "2", "ENTITIES"];
+export function dxf(result, width, scale = 1, units = null) {
+  // 실제 크기(mm)로 내보낼 때는 $INSUNITS=4(mm)를 적어, 다시 올리면 단위를 알아보게 한다
+  const lines = units === "mm" ? ["0", "SECTION", "2", "HEADER", "9", "$INSUNITS", "70", "4", "0", "ENDSEC"] : [];
+  lines.push("0", "SECTION", "2", "ENTITIES");
   const poly = (layer, pts) => {
     lines.push("0", "POLYLINE", "8", layer, "66", "1", "70", "1");
     for (const [x, y] of pts) lines.push("0", "VERTEX", "8", layer, "10", num(x), "20", num(y), "30", "0");
