@@ -1,4 +1,4 @@
-"""가능 위치 계산 방법 3. 래스터(격자). 구현 예정.
+"""가능 위치 계산 방법 3. 보수적 래스터(격자).
 
 원리
   원판과 부품을 격자로 바꾼다. 부품이 조금이라도 걸치는 칸은 모두 칠한다(보수적 래스터화).
@@ -7,7 +7,7 @@
   격자 크기만큼 틈이 생겨 활용률은 손해를 본다.
 
 배치 (순서와 회전은 nesting.sequence.fixed_sequence로 고정, 위치 선택은 Bottom-Left)
-  1. 격자 크기 cell = 원판 폭 / params["rows"] (기본값은 실험으로 정함, 예: 폭 방향 200칸)
+  1. 격자 크기 cell = 원판 폭 / params["rows"] (기본값: 폭 방향 200칸)
   2. 부품을 회전한 뒤 칸 단위 비트맵으로 바꾼다. 행마다 정수 하나의 비트로 표현하면
      겹침 검사가 비트 AND 연산이 되어 순수 Python에서도 빠르다.
   3. 원판 비트맵을 열(x) 방향으로 왼쪽부터, 각 열에서 아래(y)부터 훑어 처음 들어가는 칸을 고른다.
@@ -25,12 +25,78 @@
   cell_size         격자 한 칸 크기, grid_checks 격자 겹침 검사 횟수
 """
 
+import math
+from dataclasses import dataclass
+
+from nesting import geometry as g
+from nesting.collision import tolerance_for
 from nesting.model import Instance, Solution
 from nesting.runner import Placer, run
 
 
+@dataclass(frozen=True)
+class _Bitmap:
+    rows: tuple[int, ...]  # 아래에서 위로, bit 0이 가장 왼쪽 칸
+    minx: float
+    miny: float
+    width: int
+
+
+def _span(left: float, right: float, width: int) -> int:
+    """구간이 통과하는 칸을 표시한다. 양 끝에서 닿기만 하는 바깥 칸은 제외."""
+    start = max(0, math.floor(left))
+    stop = min(width, math.ceil(right))
+    return ((1 << (stop - start)) - 1) << start if stop > start else 0
+
+
+def _rasterize(poly, cell: float, sheet_rows: int) -> _Bitmap:
+    """스캔라인 내부 채우기 + 경계의 각 행 내 x 범위 채우기.
+
+    다각형 내부와 교차하는 칸은 경계가 칸 내부를 지나거나, 칸 전체가 내부다.
+    전자는 경계 채우기로, 후자는 행 중앙 스캔라인으로 포착한다. 중심점만 찍는
+    방식과 달리 얇은 삼각형, 수평 돌출부, 한 행 안에서 끝나는 작은 조각도 놓치지 않는다.
+    격자선에 정확히 닿기만 하는 바깥 칸은 칠하지 않아 맞닿음을 허용한다.
+    """
+    minx, miny, maxx, maxy = g.bbox(poly)
+    width = max(1, math.ceil((maxx - minx) / cell))
+    height = min(sheet_rows, max(1, math.ceil((maxy - miny) / cell)))
+    points = [((x - minx) / cell, (y - miny) / cell) for x, y in poly]
+    edges = list(zip(points, points[1:] + points[:1]))
+    bitmap = [0] * height
+
+    # 1. 행 중앙과 변의 교점을 정렬해 내부 구간들을 채운다.
+    # 꼭짓점 중복 집계를 막기 위해 한쪽 끝만 포함하는 교차 조건을 쓴다.
+    for row in range(height):
+        scan_y = row + 0.5
+        crossings = sorted(
+            ax + (scan_y - ay) * (bx - ax) / (by - ay) for (ax, ay), (bx, by) in edges if (ay > scan_y) != (by > scan_y)
+        )
+        for left, right in zip(crossings[::2], crossings[1::2]):
+            bitmap[row] |= _span(left, right, width)
+
+    # 2. 행 중앙에 도달하지 않는 얇은 부분까지 포함하도록 경계를 덧칠한다.
+    for (ax, ay), (bx, by) in edges:
+        if ay == by:
+            # 격자선 위의 수평 변은 바깥 행까지 확장하지 않는다.
+            if ay != math.floor(ay) and 0 <= ay < height:
+                bitmap[math.floor(ay)] |= _span(min(ax, bx), max(ax, bx), width)
+            continue
+        if ay > by:
+            ax, ay, bx, by = bx, by, ax, ay
+        slope = (bx - ax) / (by - ay)
+        for row in range(max(0, math.floor(ay)), min(height, math.ceil(by))):
+            low_y, high_y = max(ay, row), min(by, row + 1)
+            x0 = ax + (low_y - ay) * slope
+            x1 = ax + (high_y - ay) * slope
+            bitmap[row] |= _span(min(x0, x1), max(x0, x1), width)
+
+    if not any(bitmap):
+        raise ValueError("면적이 있는 단순 다각형이 필요합니다")
+    return _Bitmap(tuple(bitmap), minx, miny, width)
+
+
 class RasterPlacer(Placer):
-    """구현할 것은 place()와 counters() 두 개다. 사용법은 nesting/runner.py 맨 위 설명 참고.
+    """격자에서 x 최소, 같은 x에서는 y 최소인 위치를 결정적으로 찾는다.
 
     place(item, rotation)
         self.rotated(item, rotation)으로 회전한 다각형을 얻고, 가능 위치 계산 부분을
@@ -39,7 +105,7 @@ class RasterPlacer(Placer):
     counters()
         REQUIRED_COUNTERS의 키를 모두 담은 dict를 돌려준다.
 
-    tests/test_constraints.py가 이 클래스를 자동으로 검사한다. 구현 전에는 건너뛴다.
+    tests/test_constraints.py가 이 클래스를 자동으로 검사한다.
     """
 
     name = "raster"
@@ -47,12 +113,63 @@ class RasterPlacer(Placer):
 
     def __init__(self, inst, **params):
         super().__init__(inst, **params)
+        self.rows = self.params.get("rows", 200)
+        if isinstance(self.rows, bool) or not isinstance(self.rows, int) or self.rows <= 0:
+            raise ValueError("rows는 양의 정수여야 합니다")
+        if not math.isfinite(self.W) or self.W <= 0:
+            raise ValueError("원판 폭은 유한한 양수여야 합니다")
+        self.cell = self.W / self.rows
+        if not math.isfinite(self.cell) or self.cell <= 0:
+            raise ValueError("rows에 비해 원판 폭이 너무 작습니다")
+        self.eps = tolerance_for(self.W)
+        self.grid_checks = 0
+        self._board = [0] * self.rows
+        self._right = 0  # 사용한 격자 오른쪽의 첫 빈 열 (탐색 상한)
+        self._bitmap_cache: dict[tuple[int, float], _Bitmap] = {}
 
     def place(self, item: int, rotation: float) -> tuple[float, float]:
-        raise NotImplementedError("래스터 미구현")
+        poly = self.rotated(item, rotation)
+        with self.feasible_timer():
+            key = (item, rotation)
+            if key not in self._bitmap_cache:
+                _, miny, _, maxy = g.bbox(poly)
+                if maxy - miny > self.W + self.eps:
+                    raise ValueError(f"item {item} 회전 {rotation}: 원판 폭보다 높음")
+                self._bitmap_cache[key] = _rasterize(poly, self.cell, self.rows)
+            bitmap = self._bitmap_cache[key]
+            col, row = self._first_feasible(bitmap)
+            x = col * self.cell - bitmap.minx
+            y = row * self.cell - bitmap.miny
+
+        # OR로 새 조각의 점유 칸을 기록한다 (가능 위치 계산 시간에서는 제외).
+        for dy, bits in enumerate(bitmap.rows):
+            self._board[row + dy] |= bits << col
+        self._right = max(self._right, col + bitmap.width)
+        return x, y
+
+    def _first_feasible(self, bitmap: _Bitmap) -> tuple[int, int]:
+        # 촘촘한 행부터 확인하면 겹치는 후보를 빨리 탈락시킬 수 있다.
+        # 검사할 행 순서만 바꾸므로 후보 위치의 Bottom-Left 순서는 그대로다.
+        active = sorted(
+            ((dy, bits) for dy, bits in enumerate(bitmap.rows) if bits),
+            key=lambda entry: -entry[1].bit_count(),
+        )
+        max_row = self.rows - len(bitmap.rows)
+        for col in range(self._right + 1):
+            shifted = [(dy, bits << col) for dy, bits in active]
+            for row in range(max_row + 1):
+                self.grid_checks += 1
+                for dy, bits in shifted:
+                    if self._board[row + dy] & bits:
+                        break
+                else:
+                    return col, row
+        # _right부터는 기존 점유 비트가 없으므로 정상 입력에서는 도달하지 않는다.
+        raise RuntimeError("격자 탐색 상한 안에서 빈 위치를 찾지 못했습니다")
 
     def counters(self):
-        return {}
+        # grid_checks는 검사한 후보 위치 수다. 한 후보에서 여러 행을 검사해도 1회다.
+        return {"cell_size": self.cell, "grid_checks": self.grid_checks}
 
 
 def nest(inst: Instance, *, seed: int = 0, time_limit_s: float | None = None, **params) -> Solution:
