@@ -52,9 +52,14 @@ const GROUP_LABELS = { "실험 인스턴스": "보고서 실험 도면", "기타
 
 // 꼭짓점이 150~1000개라 브라우저에서 몇 분 이상 걸리는 도면
 const SLOW = new Set(["gardeyn2", "gardeyn3", "gardeyn4", "gardeyn5", "gardeyn6", "gardeyn7", "gardeyn8", "gardeyn9"]);
+// 특정 방법만 오래 걸리는 도면 (2026-11 측정: gardeyn1의 NFP는 브라우저에서 10분 이상)
+const SLOW_METHOD = { gardeyn1: ["nfp"] };
 
 // 실제 원판 폭 단위 → cm
 const TO_CM = { mm: 0.1, cm: 1, m: 100, in: 2.54 };
+
+// 도면 목록에서 "올린 파일"을 뜻하는 값
+const UPLOAD_VALUE = "__upload__";
 
 const state = {
   phase: "init", // init, loading, idle, computing, restarting
@@ -63,6 +68,7 @@ const state = {
   inst: null, // { summary, items }
   source: null, // 지금 도면을 다시 불러올 정보 (멈춘 뒤 복구용)
   pendingSource: null,
+  uploadSource: null, // 마지막으로 올린 파일 (목록에서 다시 고를 수 있게)
   restoring: false,
   autoReal: false, // 실제 폭 칸을 도면 단위에서 자동으로 채웠는지
   selected: [],
@@ -151,7 +157,8 @@ function onReady({ methods, instances }) {
     for (const it of items) {
       const o = document.createElement("option");
       o.value = it.file;
-      const bits = [it.pieces ? `조각 ${it.pieces}개` : "", SLOW.has(it.name) ? "오래 걸림" : ""].filter(Boolean);
+      const slowM = (SLOW_METHOD[it.name] || []).map((m) => `${labelOf(m)} 오래 걸림`).join(", ");
+      const bits = [it.pieces ? `조각 ${it.pieces}개` : "", SLOW.has(it.name) ? "오래 걸림" : slowM].filter(Boolean);
       o.textContent = bits.length ? `${it.name} (${bits.join(", ")})` : it.name;
       og.appendChild(o);
     }
@@ -209,16 +216,20 @@ function loadBuiltin(file) {
     entry && SLOW.has(entry.name)
       ? "꼭짓점이 많은 도면이라 브라우저에서 몇 분 이상 걸릴 수 있습니다. 계산 중에 멈추기를 누르면 중단합니다."
       : "";
-  el.instanceNote.textContent = [note, slow].filter(Boolean).join(" ");
+  const slowM = entry && SLOW_METHOD[entry.name]
+    ? `${SLOW_METHOD[entry.name].map(labelOf).join(", ")} 방법은 이 도면에서 브라우저로 10분 넘게 걸립니다. 빨리 보려면 그 방법의 선택을 끄세요.`
+    : "";
+  el.instanceNote.textContent = [note, slow, slowM]
+    .filter(Boolean)
+    .map((t) => (/[.!?]$/.test(t) ? t : `${t}.`))
+    .join(" ");
   state.pendingSource = { kind: "builtin", file };
   state.phase = "loading";
   setUi();
   worker.postMessage({ type: "loadBuiltin", file });
 }
 
-function reloadSource() {
-  const src = state.source;
-  if (!src) return;
+function postSource(src) {
   if (src.kind === "builtin") {
     worker.postMessage({ type: "loadBuiltin", file: src.file });
   } else {
@@ -227,7 +238,48 @@ function reloadSource() {
   }
 }
 
-el.instance.addEventListener("change", () => loadBuiltin(el.instance.value));
+function reloadSource() {
+  if (state.source) postSource(state.source);
+}
+
+function loadUploaded(src) {
+  el.instanceNote.textContent = `불러오는 중: ${src.name}`;
+  state.pendingSource = src;
+  state.phase = "loading";
+  setUi();
+  postSource(src);
+}
+
+// 올린 파일을 도면 목록 맨 위에 보여 주고 고른 상태로 둔다
+function markUpload(src) {
+  let opt = document.getElementById("opt-upload");
+  if (!opt) {
+    const og = document.createElement("optgroup");
+    og.label = "올린 도면";
+    opt = document.createElement("option");
+    opt.id = "opt-upload";
+    opt.value = UPLOAD_VALUE;
+    og.appendChild(opt);
+    el.instance.prepend(og);
+  }
+  opt.textContent = `올린 파일: ${src.name}`;
+  el.instance.value = UPLOAD_VALUE;
+  state.uploadSource = src;
+}
+
+function showSourceInList() {
+  const src = state.source;
+  if (!src) return;
+  el.instance.value = src.kind === "upload" ? UPLOAD_VALUE : src.file;
+}
+
+el.instance.addEventListener("change", () => {
+  if (el.instance.value === UPLOAD_VALUE) {
+    if (state.uploadSource) loadUploaded(state.uploadSource);
+    return;
+  }
+  loadBuiltin(el.instance.value);
+});
 el.file.addEventListener("change", setUi);
 el.uploadGo.addEventListener("click", async () => {
   const f = el.file.files[0];
@@ -238,11 +290,7 @@ el.uploadGo.addEventListener("click", async () => {
     unit: el.optUnit.value,
   };
   const buffer = await f.arrayBuffer();
-  state.pendingSource = { kind: "upload", name: f.name, buffer: buffer.slice(0), options };
-  el.instanceNote.textContent = `올린 파일: ${f.name}`;
-  state.phase = "loading";
-  setUi();
-  worker.postMessage({ type: "loadUpload", name: f.name, buffer, options }, [buffer]);
+  loadUploaded({ kind: "upload", name: f.name, buffer, options });
 });
 
 function onInstance(data) {
@@ -256,6 +304,10 @@ function onInstance(data) {
     return;
   }
   state.source = state.pendingSource;
+  if (state.source && state.source.kind === "upload") {
+    markUpload(state.source);
+    el.instanceNote.textContent = "직접 올린 도면입니다.";
+  }
   state.results = {};
   state.selected = [];
   el.results.hidden = true;
@@ -372,6 +424,7 @@ function onError({ during, text }) {
     renderResults();
   } else if (state.inst && !state.restoring) {
     el.instanceNote.textContent = `불러오지 못했습니다. 지금 도면은 ${state.inst.summary.name} 그대로입니다.`;
+    showSourceInList();
   }
   state.restoring = false;
   state.phase = state.inst ? "idle" : "init";
