@@ -13,12 +13,12 @@ const post = (type, payload = {}) => self.postMessage({ type, ...payload });
 
 async function init(base) {
   const url = base || DEFAULT_PYODIDE;
-  post("status", { text: "계산 준비 중이에요. 처음 열 때는 조금 걸려요." });
+  post("status", { text: "계산 준비 중입니다. 처음 열 때는 조금 걸립니다." });
   importScripts(url + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: url });
-  post("status", { text: "계산 코드를 불러오고 있어요." });
+  post("status", { text: "계산 코드를 불러오고 있습니다." });
   const zip = await fetch("py.zip", { cache: "no-cache" });
-  if (!zip.ok) throw new Error("계산 코드(py.zip)를 찾지 못했어요. python tools/build_web.py 로 site/를 만든 뒤 열어 주세요.");
+  if (!zip.ok) throw new Error("계산 코드(py.zip)를 찾지 못했습니다. python tools/build_web.py 로 site/를 만든 뒤 열면 됩니다.");
   pyodide.FS.mkdirTree("/sheetnest");
   pyodide.unpackArchive(await zip.arrayBuffer(), "zip", { extractDir: "/sheetnest" });
   pyodide.FS.mkdirTree(UPLOAD_DIR);
@@ -32,14 +32,14 @@ async function init(base) {
 // DXF, SVG 읽기 라이브러리는 필요할 때 한 번만 내려받는다(수 MB).
 async function ensureDrawingReaders() {
   if (drawingReaders) return;
-  post("status", { text: "도면 읽기 도구를 내려받고 있어요. 처음 한 번만 그래요." });
+  post("status", { text: "도면 읽기 도구를 내려받고 있습니다. 처음 한 번만 내려받습니다." });
   try {
     await pyodide.loadPackage("micropip");
     const micropip = pyodide.pyimport("micropip");
     await micropip.install(["ezdxf", "svgelements"]);
   } catch (e) {
     throw new Error(
-      "도면 읽기 도구를 내려받지 못했어요. PC에서 python tools/convert.py 로 JSON으로 바꾼 뒤 그 파일을 올려 주세요."
+      "도면 읽기 도구를 내려받지 못했습니다. PC에서 python tools/convert.py 로 JSON으로 바꾼 뒤 그 파일을 올리면 됩니다."
     );
   }
   drawingReaders = true;
@@ -47,7 +47,7 @@ async function ensureDrawingReaders() {
 
 async function loadBuiltin(file) {
   const res = await fetch(file);
-  if (!res.ok) throw new Error(`${file} 파일을 불러오지 못했어요`);
+  if (!res.ok) throw new Error(`${file} 파일을 불러오지 못했습니다`);
   const path = `${UPLOAD_DIR}/${file.split("/").pop()}`;
   pyodide.FS.writeFile(path, new Uint8Array(await res.arrayBuffer()));
   return JSON.parse(bridge.load_path(path));

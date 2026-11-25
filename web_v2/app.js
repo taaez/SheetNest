@@ -45,9 +45,9 @@ const COUNTER_LABELS = {
 };
 
 const METHOD_DESC = {
-  trig: "원판을 일정 간격의 세로줄로 나누고, 줄마다 겹치지 않는 가장 낮은 자리를 직접 계산해요.",
-  nfp: "두 조각이 맞닿는 경계(NFP)를 미리 만들어 두고, 점 하나로 빠르게 판정해요.",
-  raster: "원판을 작은 칸으로 나눠 칸끼리 비교해요. 빠르지만 칸 단위라 조금 덜 촘촘해요.",
+  trig: "원판을 일정 간격의 세로줄로 나누고, 줄마다 겹치지 않는 가장 낮은 자리를 직접 계산합니다.",
+  nfp: "두 조각이 맞닿는 경계(NFP)를 미리 만들어 두고, 점 하나로 빠르게 판정합니다.",
+  raster: "원판을 작은 칸으로 나눠 칸끼리 비교합니다. 빠르지만 칸 단위라 조금 덜 촘촘합니다.",
 };
 
 const GROUP_LABELS = { "실험 인스턴스": "보고서 실험 도면", "기타 벤치마크": "그 밖의 공개 도면" };
@@ -89,7 +89,7 @@ startWorker();
 function startWorker() {
   worker = new Worker("worker.js");
   worker.onmessage = onMessage;
-  worker.onerror = (e) => onError({ during: "init", text: e.message || "계산을 시작하지 못했어요" });
+  worker.onerror = (e) => onError({ during: "init", text: e.message || "계산을 시작하지 못했습니다" });
   worker.postMessage({ type: "init", pyodide: query.get("pyodide") || undefined });
 }
 
@@ -140,7 +140,7 @@ function stopClock() {
 // ---------------------------------------------------------------- 준비
 function onReady({ methods, instances }) {
   if (state.restoring) {
-    setEngine("다시 준비했어요. 도면을 다시 불러오고 있어요.");
+    setEngine("다시 준비했습니다. 도면을 다시 불러오고 있습니다.");
     reloadSource();
     return;
   }
@@ -216,12 +216,12 @@ function loadBuiltin(file) {
   const note = entry && entry.note ? entry.note.replace(/^\d+\.\s*/, "") : "";
   const slow =
     entry && SLOW.has(entry.name)
-      ? "꼭짓점이 많은 도면이라 브라우저에서 몇 분 넘게 걸릴 수 있어요. 계산 중에 멈추기를 누르면 바로 멈춰요."
+      ? "꼭짓점이 많은 도면이라 브라우저에서 몇 분 넘게 걸릴 수 있습니다. 계산 중에 멈추기를 누르면 바로 멈춥니다."
       : "";
   const slowM = entry && SLOW_METHOD[entry.name]
     ? `이 도면은 브라우저에서 ${Object.entries(SLOW_METHOD[entry.name])
         .map(([m, t]) => `${labelOf(m)} ${t}`)
-        .join(", ")}이 걸려요. 빨리 보려면 그 방법의 체크를 꺼 주세요.`
+        .join(", ")}이 걸립니다. 빨리 보려면 그 방법의 체크를 끄면 됩니다.`
     : "";
   el.instanceNote.textContent = [note, slow, slowM]
     .filter(Boolean)
@@ -247,7 +247,7 @@ function reloadSource() {
 }
 
 function loadUploaded(src) {
-  el.instanceNote.textContent = `${src.name} 불러오는 중이에요.`;
+  el.instanceNote.textContent = `${src.name} 불러오는 중입니다.`;
   state.pendingSource = src;
   state.phase = "loading";
   setUi();
@@ -303,14 +303,14 @@ function onInstance(data) {
     // 멈춘 뒤 새 실행 환경에 같은 도면을 다시 넣은 경우: 끝난 결과는 그대로 둔다
     state.restoring = false;
     state.phase = "idle";
-    setEngine("멈췄어요. 끝난 방법의 결과는 그대로 두었으니 바로 다시 계산할 수 있어요.", "ready");
+    setEngine("멈췄습니다. 끝난 방법의 결과는 그대로 두었으니 바로 다시 계산할 수 있습니다.", "ready");
     setUi();
     return;
   }
   state.source = state.pendingSource;
   if (state.source && state.source.kind === "upload") {
     markUpload(state.source);
-    el.instanceNote.textContent = "직접 올린 도면이에요.";
+    el.instanceNote.textContent = "직접 올린 도면입니다.";
   }
   state.results = {};
   state.selected = [];
@@ -399,7 +399,7 @@ el.stop.addEventListener("click", () => {
   state.phase = "restarting";
   setUi();
   renderResults();
-  setEngine("계산을 멈췄어요. 다시 계산할 수 있게 준비하고 있어요 (몇 초 걸려요).");
+  setEngine("계산을 멈췄습니다. 다시 계산할 수 있게 준비하고 있습니다 (몇 초 걸립니다).");
   startWorker();
 });
 
@@ -414,10 +414,10 @@ function onDone() {
 
 // 계산 코드(web/bridge.py)가 보내는 안내문을 이 화면의 말투로 바꾼다. bridge.py는 이전 화면과 같이 써서 고치지 않는다.
 const FRIENDLY_ERRORS = [
-  [/^JSON 형식이 아닙니다\. 팀 공통 instance JSON이나 sparrow JSON 파일인지 확인하세요\.$/, "JSON 형식이 아니에요. 팀 공통 instance JSON이나 sparrow JSON 파일인지 확인해 주세요."],
-  [/^원판 폭을 알 수 없습니다\. 원판 폭 칸에 값을 적고 다시 불러오세요\.$/, "원판 폭을 찾지 못했어요. 원판 폭 칸에 값을 적고 다시 불러와 주세요."],
-  [/^지원하지 않는 파일 형식: (\S*) \(JSON, DXF, SVG, XML만 가능\)$/, "이 파일 형식($1)은 읽을 수 없어요. JSON, DXF, SVG, XML 파일을 올려 주세요."],
-  [/^형식 검사 실패: /, "도면 내용에 문제가 있어요: "],
+  [/^JSON 형식이 아닙니다\. 팀 공통 instance JSON이나 sparrow JSON 파일인지 확인하세요\.$/, "JSON 형식이 아닙니다. 팀 공통 instance JSON이나 sparrow JSON 파일을 올리면 됩니다."],
+  [/^원판 폭을 알 수 없습니다\. 원판 폭 칸에 값을 적고 다시 불러오세요\.$/, "원판 폭을 찾지 못했습니다. 원판 폭 칸에 값을 적고 다시 불러오면 됩니다."],
+  [/^지원하지 않는 파일 형식: (\S*) \(JSON, DXF, SVG, XML만 가능\)$/, "이 파일 형식($1)은 읽을 수 없습니다. JSON, DXF, SVG, XML 파일만 올릴 수 있습니다."],
+  [/^형식 검사 실패: /, "도면 내용에 문제가 있습니다: "],
 ];
 
 function friendly(text) {
@@ -433,16 +433,16 @@ function onError({ during, text: raw }) {
   if (during === "init") {
     state.restoring = false;
     state.phase = "init";
-    setEngine(`계산 준비를 하지 못했어요. 인터넷 연결을 확인하고 새로 고침해 주세요. (${text})`, "fail");
+    setEngine(`계산 준비를 하지 못했습니다. 인터넷 연결을 확인한 뒤 새로 고침하면 다시 준비합니다. (${text})`, "fail");
     setUi();
     return;
   }
-  setEngine(`${during === "run" ? "계산" : "도면 읽기"} 중에 문제가 생겼어요: ${text}`, "fail");
+  setEngine(`${during === "run" ? "계산" : "도면 읽기"} 중에 문제가 생겼습니다: ${text}`, "fail");
   if (during === "run") {
     for (const n of state.selected) if (!state.results[n]) state.results[n] = { method: n, status: "error", message: text };
     renderResults();
   } else if (state.inst && !state.restoring) {
-    el.instanceNote.textContent = `이 파일은 불러오지 못했어요. 지금 도면(${state.inst.summary.name})은 그대로예요.`;
+    el.instanceNote.textContent = `이 파일은 불러오지 못했습니다. 지금 도면(${state.inst.summary.name})은 그대로입니다.`;
     showSourceInList();
   }
   state.restoring = false;
@@ -473,8 +473,8 @@ function renderVerdict() {
   if (!oks.length) {
     el.verdict.innerHTML =
       state.phase === "computing"
-        ? `<p class="v-wait">계산 중이에요. 첫 결과가 나오면 여기에 필요한 원판 길이를 보여 드릴게요.</p>`
-        : `<p class="v-wait">보여 드릴 결과가 없어요. 아래 표에서 이유를 확인해 주세요.</p>`;
+        ? `<p class="v-wait">계산 중입니다. 첫 결과가 나오면 여기에 필요한 원판 길이를 보여 드리겠습니다.</p>`
+        : `<p class="v-wait">보여 드릴 결과가 없습니다. 아래 표에서 이유를 확인할 수 있습니다.</p>`;
     return;
   }
   const valid = oks.filter(isValid);
@@ -489,7 +489,7 @@ function renderVerdict() {
   const big = k ? fmtCm(best.length * k) : `${fmt(best.length, 6)}${s.unit ? ` ${s.unit}` : ""}`;
   const basis = k
     ? `${labelOf(best.method)} 배치, 실제 원판 폭 ${fmt(Number(el.realWidth.value), 6)} ${el.realUnit.value} 기준`
-    : `${labelOf(best.method)} 배치, 원판 폭 ${fmt(s.width)}의 ${(best.length / s.width).toFixed(2)}배예요. 실제 원판 폭을 적으면 m 단위로 바꿔 드려요.`;
+    : `${labelOf(best.method)} 배치, 원판 폭 ${fmt(s.width)}의 ${(best.length / s.width).toFixed(2)}배입니다. 실제 원판 폭을 적으면 m 단위로 바꿔 드립니다.`;
 
   const lb = s.lower_bound;
   const minPct = Math.min(100, (lb / best.length) * 100);
@@ -509,26 +509,26 @@ function renderVerdict() {
   if (oks.length > 1) {
     const longer = oks.filter((r) => r.length > best.length + eps).sort((a, b) => b.length - a.length);
     if (!longer.length) {
-      diff = `<p class="v-diff">계산한 방법의 길이가 모두 같아요. 차이는 계산 속도뿐이에요.</p>`;
+      diff = `<p class="v-diff">계산한 방법의 길이가 모두 같습니다. 차이는 계산 속도뿐입니다.</p>`;
     } else {
       const parts = longer.map((r) => {
         const d = r.length - best.length;
         return k ? `${labelOf(r.method)}보다 ${fmtCm(d * k)}` : `${labelOf(r.method)}보다 ${fmt(d, 4)} (${((d / r.length) * 100).toFixed(1)}%)`;
       });
       const worst = longer[0].length - best.length;
-      const times100 = k ? ` 같은 작업을 100번 하면 ${fmtCm(worst * k * 100)}나 차이 나요.` : "";
-      diff = `<p class="v-diff">${parts.join(", ")} 짧아요.${times100}</p>`;
+      const times100 = k ? ` 같은 작업을 100번 하면 ${fmtCm(worst * k * 100)}나 차이 납니다.` : "";
+      diff = `<p class="v-diff">${parts.join(", ")} 짧습니다.${times100}</p>`;
     }
   }
 
   const bad = oks.filter((r) => !isValid(r));
   const check = bad.length
-    ? `<p class="v-check bad">${bad.map((r) => labelOf(r.method)).join(", ")} 배치가 검사를 통과하지 못했어요: ` +
+    ? `<p class="v-check bad">${bad.map((r) => labelOf(r.method)).join(", ")} 배치가 검사를 통과하지 못했습니다: ` +
       `${escapeHtml([...bad[0].valid_errors, ...bad[0].rule_errors][0] || "")}</p>`
-    : `<p class="v-check ok">겹친 조각도, 원판 밖으로 나간 조각도 없어요. ` +
-      `${oks.length > 1 ? `${oks.length}개 방법 모두 개수와 순서까지 확인했어요.` : "개수와 순서도 맞아요."}</p>`;
+    : `<p class="v-check ok">겹친 조각도, 원판 밖으로 나간 조각도 없습니다. ` +
+      `${oks.length > 1 ? `${oks.length}개 방법 모두 개수와 순서까지 확인했습니다.` : "개수와 순서도 맞습니다."}</p>`;
 
-  const pending = state.phase === "computing" ? `<p class="v-note">아직 계산 중인 방법이 있어서 결론이 바뀔 수 있어요.</p>` : "";
+  const pending = state.phase === "computing" ? `<p class="v-note">아직 계산 중인 방법이 있어서 결론이 바뀔 수 있습니다.</p>` : "";
   const actions =
     `<div class="v-actions"><span>이 배치 내려받기${k ? " (실제 크기, mm)" : " (도면 단위)"}</span>` +
     `<button type="button" class="quiet" data-act="svg" data-m="${best.method}">커터용 SVG</button>` +
@@ -549,9 +549,9 @@ function renderHead(k) {
 
 function statusText(name, r) {
   if (!r) return state.running === name ? "계산 중" : state.phase === "computing" ? "기다리는 중" : "";
-  if (r.status === "stopped") return "멈춰서 계산하지 않았어요";
-  if (r.status === "not_implemented") return "아직 만드는 중인 방법이에요";
-  return `문제가 생겼어요: ${escapeHtml(r.message)}`;
+  if (r.status === "stopped") return "멈춰서 계산하지 않았습니다";
+  if (r.status === "not_implemented") return "아직 만드는 중인 방법입니다";
+  return `문제가 생겼습니다: ${escapeHtml(r.message)}`;
 }
 
 function renderTable() {
@@ -626,12 +626,12 @@ function renderStrips() {
     const card = document.createElement("article");
     card.className = "strip";
     if (!r) {
-      const txt = state.running === name ? "계산 중이에요." : state.phase === "computing" ? "앞 방법이 끝나기를 기다리고 있어요." : "";
+      const txt = state.running === name ? "계산 중입니다." : state.phase === "computing" ? "앞 방법이 끝나기를 기다리고 있습니다." : "";
       card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">${txt}</p>`;
     } else if (r.status === "stopped") {
-      card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">멈춰서 계산하지 않았어요.</p>`;
+      card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">멈춰서 계산하지 않았습니다.</p>`;
     } else if (r.status === "not_implemented") {
-      card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">아직 만드는 중인 방법이에요. 코드가 합쳐지면 이 자리에 결과가 나와요.</p>`;
+      card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">아직 만드는 중인 방법입니다. 코드가 합쳐지면 이 자리에 결과가 나옵니다.</p>`;
     } else if (r.status !== "ok") {
       card.innerHTML = `<header><h4>${label}</h4></header><p class="msg err">${escapeHtml(r.message)}\n${escapeHtml(r.trace || "")}</p>`;
     } else {
