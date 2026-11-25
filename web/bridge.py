@@ -32,6 +32,9 @@ LABELS = {"trig": "삼각법", "nfp": "NFP", "raster": "래스터"}
 
 # 화면에서 바꿀 수 있는 방법별 매개변수 (값을 비우면 각 방법의 기본값을 쓴다)
 PARAMS = {
+    "trig": [
+        {"key": "rows", "label": "x 간격 (폭 ÷ 값)", "type": "int", "min": 10, "max": 2000, "step": 10},
+    ],
     "raster": [
         {"key": "rows", "label": "폭 방향 칸 수", "type": "int", "min": 10, "max": 2000, "step": 10},
     ],

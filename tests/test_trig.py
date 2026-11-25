@@ -84,3 +84,49 @@ def test_run_with_sequence_matches_nest():
     a = run(inst, TrigPlacer, sequence=fixed_sequence(inst))
     b = algorithms.get("trig")(inst)
     assert a.placements == b.placements
+
+
+def test_fills_notch():
+    """ㄷ자 홈 안의 빈자리를 찾는다 (바운딩 박스 경계 후보만 보면 놓치는 자리)."""
+    inst = Instance.from_dict(
+        {
+            "format": "nesting-instance/1",
+            "name": "notch",
+            "sheet": {"width": 3},
+            "items": [
+                {
+                    "id": 0,
+                    "quantity": 1,
+                    "rotations": [0],
+                    "polygon": [[0, 0], [3, 0], [3, 3], [0, 3], [0, 2], [2, 2], [2, 1], [0, 1]],
+                },
+                {"id": 1, "quantity": 1, "rotations": [0], "polygon": [[0, 0], [1, 0], [1, 1], [0, 1]]},
+            ],
+        }
+    )
+    pl = TrigPlacer(inst).place_all([(0, 0), (1, 0)])
+    assert (pl[1].x, pl[1].y) == (0, 1)
+
+
+def test_lowest_height_exact():
+    """기울어진 변 위에 얹을 때 y는 격자가 아니라 접촉 높이로 정확히 정해진다."""
+    inst = Instance.from_dict(
+        {
+            "format": "nesting-instance/1",
+            "name": "slope",
+            "sheet": {"width": 10},
+            "items": [
+                {"id": 0, "quantity": 1, "rotations": [0], "polygon": [[0, 0], [10, 0], [10, 3], [0, 1]]},
+                {"id": 1, "quantity": 1, "rotations": [0], "polygon": [[0, 0], [1, 0], [1, 1], [0, 1]]},
+            ],
+        }
+    )
+    pl = TrigPlacer(inst).place_all([(0, 0), (1, 0)])
+    # x = 0 열: 정사각형 오른쪽 아래 꼭짓점 (1, y)가 변 y = 1 + 0.2x 위에 얹힌다 → y = 1.2
+    assert pl[1].x == 0 and abs(pl[1].y - 1.2) < 1e-9
+
+
+@pytest.mark.parametrize("rows", [0, -1, 2.5, True])
+def test_bad_rows_rejected(rows):
+    with pytest.raises(ValueError):
+        TrigPlacer(_square_inst(), rows=rows)

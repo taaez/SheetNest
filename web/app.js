@@ -26,6 +26,8 @@ const el = {
 const COUNTER_LABELS = {
   overlap_checks: ["정밀 겹침 판정", "회"],
   bbox_rejects: ["박스 단계 제외", "회"],
+  columns: ["살펴본 열", "개"],
+  lifts: ["겹침 풀기", "회"],
   nfp_computed: ["NFP 계산", "개"],
   nfp_cache_hits: ["NFP 재사용", "회"],
   candidate_evals: ["후보점 판정", "회"],
