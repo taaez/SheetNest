@@ -34,7 +34,7 @@ algorithms/
   baseline/          바운딩 박스 줄 쌓기 (검증·화면 개발용, 비교 대상 아님)
   trig/              1. 삼각법(직접 판정) (구현 완료)
   nfp/               2. NFP (구현 완료)
-  raster/            3. 래스터 (구현 예정)
+  raster/            3. 래스터 (구현 완료)
 experiments/         selected.txt(실험 인스턴스 7개), 실험 설명
 web/                 웹 데모 (브라우저 단독, Pyodide)
 tools/
