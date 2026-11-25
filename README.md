@@ -11,6 +11,13 @@
 2. NFP(No-Fit Polygon) — 겹치게 되는 영역을 미리 계산해 점 하나로 판정
 3. 래스터 — 격자 비트맵으로 바꿔 비트 연산으로 판정
 
+## 웹 데모
+
+https://taaez.github.io/SheetNest/
+
+설치 없이 브라우저에서 바로 실행된다. 브라우저 안의 Python(Pyodide)이 이 저장소의 `nesting/`, `algorithms/` 코드를 그대로 돌린다.
+main에 합쳐질 때마다 GitHub Actions가 자동으로 다시 배포한다. 로컬에서 확인하려면 `python tools/build_web.py --serve`를 실행하고 http://localhost:8000 을 연다.
+
 ## 폴더 구조
 
 ```
@@ -26,10 +33,10 @@ nesting/
 algorithms/
   baseline/          바운딩 박스 줄 쌓기 (검증·화면 개발용, 비교 대상 아님)
   trig/              1. 삼각법(직접 판정) (구현 완료)
-  nfp/               2. NFP (구현 예정)
+  nfp/               2. NFP (구현 완료)
   raster/            3. 래스터 (구현 예정)
 experiments/         selected.txt(실험 인스턴스 7개), 실험 설명
-web/                 웹 데모 (구조 미정)
+web/                 웹 데모 (브라우저 단독, Pyodide)
 tools/
   run.py             알고리즘 실행 + 검증 + 저장
   report.py          선정 7개 실행 → 제약 검사, 수치표, 배치 그림 HTML + CSV (results/)
@@ -37,6 +44,7 @@ tools/
   convert.py         파일 1개 → 공통 instance JSON
   build_datasets.py  sparrow·ESICUP 저장소 일괄 변환 + 교차 검증
   preview.py         instance/solution을 SVG로 그려 확인
+  build_web.py       웹 배포용 site/ 생성 (--serve로 로컬 확인)
 data/instances/      변환된 벤치마크 59개 + index.csv(요약표)
 docs/SPEC.md         공통 입출력 형식·겹침 판정·검증 규칙 (반드시 읽기)
 CONTRIBUTING.md      환경 설정, 브랜치·커밋 규칙
