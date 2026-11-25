@@ -19,7 +19,8 @@ def test_bottom_left_and_touching():
     inst = Instance("squares", 2, [Item(0, square, quantity=5)])
     sol = nest(inst, rows=2)
     assert [(p.x, p.y) for p in sol.placements] == [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0)]
-    assert sol.stats["grid_checks"] == 15
+    # 첫 사본 1회, 다음 사본은 직전 사본 칸(이제 막힘)과 새 칸을 보므로 2회씩: 1 + 2 × 4
+    assert sol.stats["grid_checks"] == 9
     assert validate(inst, sol).ok
 
 
@@ -127,3 +128,21 @@ def test_all_positive_area_cells_are_covered(poly, rotation):
         for col in range(bitmap.width):
             if _clipped_area(normalized, col, row) > 1e-10:
                 assert bitmap.rows[row] & (1 << col), (rotation, col, row)
+
+
+def test_copy_start_does_not_change_placements():
+    """같은 부품 사본을 직전 사본 위치부터 찾는 가속은 배치를 바꾸지 않는다 (shirts 수량 2배)."""
+    import json
+
+    from nesting.runner import run
+
+    d = json.loads((ROOT / "data/instances/sparrow/shirts.json").read_text(encoding="utf-8"))
+    for it in d["items"]:
+        it["quantity"] *= 2
+    inst = Instance.from_dict(d)
+
+    class NoStart(RasterPlacer):
+        def _first_feasible(self, bitmap, col0=0, row0=0):
+            return super()._first_feasible(bitmap)
+
+    assert run(inst, RasterPlacer).placements == run(inst, NoStart).placements

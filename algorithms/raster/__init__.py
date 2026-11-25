@@ -13,6 +13,10 @@
   3. 원판 비트맵을 열(x) 방향으로 왼쪽부터, 각 열에서 아래(y)부터 훑어 처음 들어가는 칸을 고른다.
   4. 고른 칸의 좌표를 실제 x, y로 바꾼다. 부품 기준점과 격자가 어긋나지 않게 주의한다.
 
+결과를 바꾸지 않는 가속 (삼각법, NFP와 같은 규칙)
+  같은 부품, 같은 회전의 다음 사본은 직전 사본이 놓인 (열, 행)부터 훑는다. 놓인 부품이 늘면
+  들어갈 수 있는 칸은 줄기만 하므로, 직전 사본 위치보다 앞선 칸은 지금도 들어갈 수 없다.
+
 구현 메모
   래스터화는 다각형 내부 칸(스캔라인 채우기)과 경계가 지나가는 칸을 모두 칠한다.
   부품 비트맵은 (부품, 회전) 조합마다 한 번만 만들어 캐시한다.
@@ -126,6 +130,7 @@ class RasterPlacer(Placer):
         self._board = [0] * self.rows
         self._right = 0  # 사용한 격자 오른쪽의 첫 빈 열 (탐색 상한)
         self._bitmap_cache: dict[tuple[int, float], _Bitmap] = {}
+        self._start: dict[tuple[int, float], tuple[int, int]] = {}  # 부품·회전별 다음 사본이 볼 첫 (열, 행)
 
     def place(self, item: int, rotation: float) -> tuple[float, float]:
         poly = self.rotated(item, rotation)
@@ -137,17 +142,19 @@ class RasterPlacer(Placer):
                     raise ValueError(f"item {item} 회전 {rotation}: 원판 폭보다 높음")
                 self._bitmap_cache[key] = _rasterize(poly, self.cell, self.rows)
             bitmap = self._bitmap_cache[key]
-            col, row = self._first_feasible(bitmap)
+            col, row = self._first_feasible(bitmap, *self._start.get(key, (0, 0)))
             x = col * self.cell - bitmap.minx
             y = row * self.cell - bitmap.miny
 
+        self._start[key] = (col, row)
         # OR로 새 조각의 점유 칸을 기록한다 (가능 위치 계산 시간에서는 제외).
         for dy, bits in enumerate(bitmap.rows):
             self._board[row + dy] |= bits << col
         self._right = max(self._right, col + bitmap.width)
         return x, y
 
-    def _first_feasible(self, bitmap: _Bitmap) -> tuple[int, int]:
+    def _first_feasible(self, bitmap: _Bitmap, col0: int = 0, row0: int = 0) -> tuple[int, int]:
+        """(col0, row0)부터 Bottom-Left 순서(열, 그 안에서 행)로 처음 들어가는 칸."""
         # 촘촘한 행부터 확인하면 겹치는 후보를 빨리 탈락시킬 수 있다.
         # 검사할 행 순서만 바꾸므로 후보 위치의 Bottom-Left 순서는 그대로다.
         active = sorted(
@@ -155,9 +162,9 @@ class RasterPlacer(Placer):
             key=lambda entry: -entry[1].bit_count(),
         )
         max_row = self.rows - len(bitmap.rows)
-        for col in range(self._right + 1):
+        for col in range(col0, self._right + 1):
             shifted = [(dy, bits << col) for dy, bits in active]
-            for row in range(max_row + 1):
+            for row in range(row0 if col == col0 else 0, max_row + 1):
                 self.grid_checks += 1
                 for dy, bits in shifted:
                     if self._board[row + dy] & bits:

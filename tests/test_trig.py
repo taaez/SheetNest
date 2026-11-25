@@ -130,3 +130,19 @@ def test_lowest_height_exact():
 def test_bad_rows_rejected(rows):
     with pytest.raises(ValueError):
         TrigPlacer(_square_inst(), rows=rows)
+
+
+def test_copy_start_does_not_change_placements():
+    """같은 부품 사본을 직전 사본의 열부터 찾는 가속은 배치를 바꾸지 않는다 (shirts 수량 2배)."""
+    import json
+
+    d = json.loads((ROOT / "data/instances/sparrow/shirts.json").read_text(encoding="utf-8"))
+    for it in d["items"]:
+        it["quantity"] *= 2
+    inst = Instance.from_dict(d)
+
+    class NoStart(TrigPlacer):
+        def _bottom_left_fill(self, poly, minx, miny, w, h, k):
+            return super()._bottom_left_fill(poly, minx, miny, w, h, 0)
+
+    assert run(inst, TrigPlacer).placements == run(inst, NoStart).placements
