@@ -13,9 +13,14 @@
 <header class="top">
   <div class="wrap">
     <h1>SheetNest</h1>
-    <p class="lead">조각과 원판 폭을 정하면 조각을 겹치지 않게 배치하고, 원판이 얼마나 필요한지 알려 줍니다.
-      같은 배치를 세 가지 계산 방법(삼각법, NFP, 래스터)으로 구해 속도도 비교합니다.</p>
-    <p id="engine" class="engine" role="status" aria-live="polite">Python 실행 환경을 불러오는 중</p>
+    <div class="flow" role="list" aria-label="사용 순서">
+      <div class="step" role="listitem"><b>도면 고르기</b><span>준비된 도면이나 내 파일</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="step" role="listitem"><b>계산하기</b><span>세 가지 방법으로 한 번에</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="step" role="listitem"><b>결과 보기</b><span>필요한 원판 길이와 절단 파일</span></div>
+    </div>
+    <p id="engine" class="engine" role="status" aria-live="polite">계산 준비 중이에요. 처음 열 때는 조금 걸려요.</p>
   </div>
 </header>
 
@@ -45,7 +50,7 @@
             <option value="in">in</option>
           </select>
         </div>
-        <p id="real-hint" class="hint">적으면 필요한 길이를 실제 길이로 보여 주고, 내려받는 도면도 실제 크기(mm)로 만듭니다.</p>
+        <p id="real-hint" class="hint">적어 두면 필요한 길이를 m 단위로 알려 주고, 내려받는 도면도 실제 크기(mm)로 만들어 줘요. 안 적어도 괜찮아요.</p>
       </div>
 
       <details id="upload">
@@ -57,7 +62,7 @@
         <div class="row">
           <label class="field">
             <span>원판 폭 (도면 단위)</span>
-            <input id="opt-width" type="number" min="0" step="any" placeholder="도면에서 찾기">
+            <input id="opt-width" type="number" min="0" step="any" placeholder="비우면 도면에서 찾아요">
           </label>
           <label class="field">
             <span>돌려 놓기 허용</span>
@@ -75,8 +80,8 @@
           </label>
         </div>
         <button id="upload-go" type="button" class="quiet" disabled>이 파일 불러오기</button>
-        <p class="hint">원판 폭을 비워 두면 도면 안의 원판 사각형(DXF는 SHEET 레이어, SVG는 id가 sheet인 사각형)에서 폭을 읽습니다.
-          처음 DXF나 SVG를 올릴 때는 도면 읽기 도구를 내려받느라 몇 초 더 걸립니다.</p>
+        <p class="hint">원판 폭을 비워 두면 도면 안의 원판 사각형(DXF는 SHEET 레이어, SVG는 id가 sheet인 사각형)에서 찾아요.
+          DXF나 SVG를 처음 올릴 때는 도면 읽기 도구를 내려받느라 몇 초 더 걸려요.</p>
       </details>
     </div>
 
@@ -87,12 +92,12 @@
         <button id="run" type="button" class="primary" disabled>배치 계산</button>
         <button id="stop" type="button" class="quiet stop" hidden>멈추기</button>
       </div>
-      <p id="run-note" class="hint">계산은 서버 없이 이 브라우저 안에서 합니다. 시간은 PC에서 직접 잰 보고서 값보다 2배 안팎 느리게 나옵니다.</p>
+      <p id="run-note" class="hint">계산은 서버 없이 이 브라우저 안에서 해요. 그래서 시간은 PC에서 잰 보고서 값보다 2배쯤 느리게 나와요.</p>
     </div>
   </section>
 
   <section id="results" class="results" hidden aria-label="결과">
-    <h2>3. 결과</h2>
+    <h2>3. 결과 보기</h2>
     <div id="verdict" class="verdict" aria-live="polite"></div>
 
     <h3 class="sub">세 방법 비교</h3>
@@ -104,12 +109,12 @@
         <tbody></tbody>
       </table>
     </div>
-    <p class="legend"><span class="sw core"></span>가능 위치 계산(여기에 놓으면 겹치는지 판정하는 부분)
-      <span class="sw rest"></span>그 밖의 처리. 막대 길이는 가장 오래 걸린 방법에 맞췄습니다.</p>
+    <p class="legend"><span class="sw core"></span>가능 위치 계산(여기에 놓으면 겹치는지 따지는 부분)
+      <span class="sw rest"></span>그 밖의 처리. 막대 길이는 가장 오래 걸린 방법을 기준으로 맞췄어요.</p>
 
     <details id="counters-box" class="counters-box">
       <summary>계산량 자세히</summary>
-      <p class="hint">같은 배치를 구하려고 각 방법이 몇 번 계산했는지입니다. NFP 재사용이 많을수록 같은 모양 쌍의 계산을 다시 하지 않은 것입니다.</p>
+      <p class="hint">같은 배치를 구하려고 각 방법이 몇 번 계산했는지 보여 줘요. NFP 재사용이 많을수록 같은 모양 쌍을 다시 계산하지 않았다는 뜻이에요.</p>
       <div id="counters"></div>
     </details>
 
@@ -120,17 +125,17 @@
         <input id="step" type="range" min="0" max="0" value="0" aria-label="놓은 조각 수">
         <output id="step-out"></output>
       </div>
-      <p class="hint">세 방법은 같은 조각을 같은 순서로 놓고, 놓을 자리를 고르는 규칙도 같습니다. 다른 것은 겹치는지 계산하는 방법뿐입니다.
-        모든 그림은 같은 축척이라 오른쪽 끝이 짧을수록 원판을 덜 쓴 것입니다.</p>
+      <p class="hint">세 방법은 같은 조각을 같은 순서로 놓고, 자리를 고르는 규칙도 같아요. 다른 건 겹치는지 계산하는 방법뿐이에요.
+        그림은 모두 같은 축척이라, 오른쪽 끝이 짧을수록 원판을 덜 쓴 거예요.</p>
     </div>
     <div id="strips" class="strips"></div>
   </section>
 </main>
 
 <footer class="wrap foot">
-  <p>동국대학교 알고리즘 4조. 코드와 실험 데이터는
-    <a href="https://github.com/taaez/SheetNest">github.com/taaez/SheetNest</a>에 있습니다.
-    알고리즘 비교 중심의 <a href="../">이전 화면</a>도 그대로 열 수 있습니다.</p>
+  <p>동국대학교 알고리즘 4조가 만들었어요. 코드와 실험 데이터는
+    <a href="https://github.com/taaez/SheetNest">github.com/taaez/SheetNest</a>에 있어요.
+    알고리즘 비교 중심의 <a href="../">이전 화면</a>도 그대로 열 수 있어요.</p>
 </footer>
 
 <script type="module" src="app.js"></script>

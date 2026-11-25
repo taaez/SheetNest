@@ -33,6 +33,11 @@ body {
 .top { background: var(--mat); color: #fff; padding: 28px 0 22px; }
 .top h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
 .top .lead { margin: 8px 0 0; max-width: 46em; color: #dcebe9; }
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px 10px; margin: 14px 0 0; }
+.flow .step { display: flex; flex-direction: column; justify-content: center; padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: var(--radius); background: rgba(255, 255, 255, 0.06); }
+.flow .step b { font-size: 17px; font-weight: 600; color: #fff; }
+.flow .step span { font-size: 14px; color: #cfe3e0; }
+.flow .arrow { align-self: center; font-size: 22px; font-weight: 700; color: var(--chalk); }
 .engine { margin: 14px 0 0; font-size: 14px; color: var(--chalk); }
 .engine.ready { color: #bfe3d2; }
 .engine.fail { color: #ffd0cc; }
@@ -180,4 +185,6 @@ table.mini th { background: #eef2f1; color: var(--ink); font-weight: 600; }
   .summary { grid-template-columns: repeat(2, auto); }
   .row { grid-template-columns: 1fr; }
   .top h1 { font-size: 28px; }
+  .flow { flex-direction: column; align-items: stretch; }
+  .flow .arrow { transform: rotate(90deg); align-self: flex-start; margin-left: 18px; line-height: 1; }
 }
