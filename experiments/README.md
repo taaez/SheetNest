@@ -57,6 +57,4 @@ python tools/run.py baseline experiments/selected.txt -o results/
 
 ## 정할 것 (회의 안건)
 
-- 시간 측정 반복 횟수 (예: 5회 평균)
-- 삼각법과 래스터의 rows 기본값과 격자 크기 실험 범위
 - sparrow 기준선 결과 수집 방법
