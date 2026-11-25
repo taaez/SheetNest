@@ -155,7 +155,7 @@ button.stop { padding: 11px 18px; font-weight: 600; border-color: var(--bad); co
 .v-big { margin: 2px 0 6px; font-size: 46px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--chalk); }
 .v-basis { margin: 0; font-size: 14px; color: #dcebe9; }
 .v-body { padding: 18px 22px; }
-.verdict { word-break: keep-all; overflow-wrap: break-word; }
+.setup, .results, .foot { word-break: keep-all; overflow-wrap: break-word; }
 .tape { display: flex; height: 18px; border-radius: 3px; overflow: hidden; background: #edf1f0; }
 .tape .min { background: var(--mat-grid); }
 .tape .extra { background: repeating-linear-gradient(135deg, var(--chalk) 0 6px, #f7dc86 6px 12px); }
@@ -208,3 +208,20 @@ table.mini th { background: #eef2f1; color: var(--ink); font-weight: 600; }
 .badge.win { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--chalk); color: var(--ink); font-size: 12px; font-weight: 700; vertical-align: 2px; }
 tr.best-row td { background: #fbf4dc; }
 .strip.best { outline: 3px solid var(--chalk); }
+
+/* 우선순위 고르기 */
+.priority { border: 0; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; min-width: 0; }
+.priority legend { padding: 0; margin-bottom: 8px; font-size: 14px; color: var(--steel); }
+.priority .hint { margin: 2px 0 0; }
+.prio { border: 1px solid var(--line); border-radius: 4px; padding: 9px 12px; }
+.prio:has(input:checked) { border-color: var(--mat); box-shadow: inset 3px 0 0 var(--mat); }
+.prio > label { display: flex; align-items: flex-start; gap: 9px; }
+.prio input[type="radio"] { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--mat); }
+.prio .p-text b { display: block; font-weight: 600; }
+.prio .p-text span { display: block; font-size: 14px; color: var(--steel); line-height: 1.45; }
+.prio .state { margin-left: auto; flex: none; font-size: 13px; color: var(--steel); }
+.prio.off { background: #f1f4f3; color: var(--steel); }
+.prio.off .p-text b { font-weight: 500; }
+.limit-row { margin: 8px 0 0 27px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--steel); }
+.limit-row input { width: 80px; }
+.field-label { margin: 0 0 6px; font-size: 14px; color: var(--steel); }

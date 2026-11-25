@@ -372,9 +372,22 @@ for (const input of [el.realWidth, el.realUnit]) {
 }
 
 // ---------------------------------------------------------------- 실행
+// 우선순위. 지금은 자재 절약 우선만 연다. 계산 속도 우선(speed)과 시간 제한(limit)은
+// 실험 3의 시간 예측(지표 → 방법별 예상 시간, 브라우저 배수 포함)이 들어오면 연다.
+function priority() {
+  const c = document.querySelector('input[name="priority"]:checked');
+  return c ? c.value : "material";
+}
+
+// 실행 순서: 래스터는 큰 도면에서도 몇 초면 끝나므로 먼저 돌려 첫 결과를 빨리 보여 준다.
+// 오래 걸리는 방법을 중간에 멈춰도 래스터 결과는 남는다.
+function runOrder(methods) {
+  return methods.includes("raster") ? ["raster", ...methods.filter((m) => m !== "raster")] : methods;
+}
+
 el.run.addEventListener("click", () => {
-  const methods = checkedMethods();
-  if (!methods.length || !state.inst || state.phase !== "idle") return;
+  const methods = runOrder(checkedMethods());
+  if (!methods.length || !state.inst || state.phase !== "idle" || priority() !== "material") return;
   stopPlay();
   state.selected = methods;
   state.results = {};
