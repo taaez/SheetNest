@@ -1,6 +1,6 @@
 """실험 2. 복제 실험 (실험 0의 단계별 시간도 함께 기록).
 
-python tools/exp2_scaling.py                    # SPEC 5.6절의 기본 구성
+python tools/exp2_scaling.py                    # experiments/README.md 실험 규칙의 기본 구성
 python tools/exp2_scaling.py --only shirts      # 한 인스턴스만
 
 부품마다 수량을 1, 2, 4, 8(, 16)배로 늘리고 원판 폭은 그대로 둔다. 세 방법을 rows 200으로 돌리고,
