@@ -46,8 +46,8 @@ const COUNTER_LABELS = {
 
 const METHOD_DESC = {
   trig: "원판을 일정 간격의 세로줄로 나누고, 줄마다 겹치지 않는 가장 낮은 자리를 직접 계산합니다.",
-  nfp: "두 조각이 맞닿는 경계(NFP)를 미리 만들어 두고, 점 하나로 빠르게 판정합니다.",
-  raster: "원판을 작은 칸으로 나눠 칸끼리 비교합니다. 빠르지만 칸 단위라 조금 덜 촘촘합니다.",
+  nfp: "두 조각이 맞닿는 경계(NFP)를 미리 만들어 두고, 점 하나로 겹치는지 판정합니다.",
+  raster: "원판을 작은 칸으로 나눠 칸끼리 비교합니다. 계산은 빠르지만 칸 단위라 길이가 조금 길게 나올 수 있습니다.",
 };
 
 const GROUP_LABELS = { "실험 인스턴스": "보고서 실험 도면", "기타 벤치마크": "그 밖의 공개 도면" };
@@ -467,29 +467,63 @@ function renderResults() {
   renderStrips();
 }
 
+// 길이가 같으면(오차 안) 빠른 쪽을 앞에 둔다
+function byLength(a, b) {
+  const eps = 1e-9 * Math.max(1, state.inst.summary.width);
+  return Math.abs(a.length - b.length) <= eps ? a.time_place_ms - b.time_place_ms : a.length - b.length;
+}
+
+// 표와 배치 그림의 순서: 검사를 통과한 결과를 짧은 순으로, 그다음 검사 실패, 그다음 아직 없는 결과(고른 순서)
+function shortestFirst() {
+  const group = (n) => {
+    const r = state.results[n];
+    return !r || r.status !== "ok" ? 2 : isValid(r) ? 0 : 1;
+  };
+  return state.selected
+    .map((n, i) => [n, i])
+    .sort(([a, i], [b, j]) => group(a) - group(b) || (group(a) < 2 ? byLength(state.results[a], state.results[b]) : 0) || i - j)
+    .map(([n]) => n);
+}
+
+// 길이가 서로 다를 때 가장 짧은 방법 이름 (같거나 하나뿐이면 null)
+function shortestName() {
+  const valid = okResults().filter(isValid);
+  if (valid.length < 2) return null;
+  const eps = 1e-9 * Math.max(1, state.inst.summary.width);
+  const sorted = [...valid].sort(byLength);
+  return sorted[sorted.length - 1].length - sorted[0].length > eps ? sorted[0].method : null;
+}
+
 function renderVerdict() {
   const s = state.inst.summary;
   const oks = okResults();
   if (!oks.length) {
     el.verdict.innerHTML =
       state.phase === "computing"
-        ? `<p class="v-wait">계산 중입니다. 첫 결과가 나오면 여기에 필요한 원판 길이를 보여 드리겠습니다.</p>`
+        ? `<p class="v-wait">계산 중입니다. 첫 결과가 나오면 여기에 가장 짧은 배치를 보여 드리겠습니다.</p>`
         : `<p class="v-wait">보여 드릴 결과가 없습니다. 아래 표에서 이유를 확인할 수 있습니다.</p>`;
     return;
   }
   const valid = oks.filter(isValid);
-  const pool = valid.length ? valid : oks;
+  const pool = [...(valid.length ? valid : oks)].sort(byLength);
+  const best = pool[0];
   const eps = 1e-9 * Math.max(1, s.width);
-  const best = pool.reduce((a, b) =>
-    b.length < a.length - eps || (Math.abs(b.length - a.length) <= eps && b.time_place_ms < a.time_place_ms) ? b : a
-  );
-  const fastest = oks.reduce((a, b) => (b.time_place_ms < a.time_place_ms ? b : a));
   const k = realScale();
+  const unit = s.unit ? ` ${s.unit}` : "";
+  const lenOf = (r) => (k ? fmtCm(r.length * k) : `${fmt(r.length, 6)}${unit}`);
+  const diffOf = (d) => (k ? fmtCm(d * k) : `${fmt(d, 4)} (${((d / best.length) * 100).toFixed(1)}%)`);
 
-  const big = k ? fmtCm(best.length * k) : `${fmt(best.length, 6)}${s.unit ? ` ${s.unit}` : ""}`;
+  const many = pool.length > 1;
+  const longest = pool[pool.length - 1];
+  const allSame = many && longest.length - best.length <= eps;
+  const win = !many
+    ? `<p class="v-win"><b>${labelOf(best.method)}</b> 배치 결과입니다</p>`
+    : allSame
+      ? `<p class="v-win">계산한 방법의 길이가 모두 같습니다</p>`
+      : `<p class="v-win"><b>${labelOf(best.method)}</b> 배치가 가장 짧습니다</p>`;
   const basis = k
-    ? `${labelOf(best.method)} 배치, 실제 원판 폭 ${fmt(Number(el.realWidth.value), 6)} ${el.realUnit.value} 기준`
-    : `${labelOf(best.method)} 배치, 원판 폭 ${fmt(s.width)}의 ${(best.length / s.width).toFixed(2)}배입니다. 실제 원판 폭을 적으면 m 단위로 바꿔 드립니다.`;
+    ? `실제 원판 폭 ${fmt(Number(el.realWidth.value), 6)} ${el.realUnit.value} 기준`
+    : `원판 폭 ${fmt(s.width)}의 ${(best.length / s.width).toFixed(2)}배입니다. 실제 원판 폭을 적으면 m 단위로 바꿔 드립니다.`;
 
   const lb = s.lower_bound;
   const minPct = Math.min(100, (lb / best.length) * 100);
@@ -502,24 +536,28 @@ function renderVerdict() {
     `<dl class="v-stats">` +
     `<div><dt>버려지는 부분</dt><dd>${((1 - best.utilization) * 100).toFixed(1)}%</dd></div>` +
     `<div><dt>이론상 최소보다</dt><dd>+${(best.over_lower_bound * 100).toFixed(1)}%</dd></div>` +
-    `<div><dt>${oks.length > 1 ? "가장 빠른 계산" : "계산 시간"}</dt><dd>${labelOf(fastest.method)} ${fmtMs(fastest.time_place_ms)}</dd></div>` +
     `</dl>`;
 
-  let diff = "";
+  // 방법별 길이를 짧은 순으로. 검사를 통과하지 못한 결과는 맨 뒤에 따로 표시
+  let rank = "";
   if (oks.length > 1) {
-    const longer = oks.filter((r) => r.length > best.length + eps).sort((a, b) => b.length - a.length);
-    if (!longer.length) {
-      diff = `<p class="v-diff">계산한 방법의 길이가 모두 같습니다. 차이는 계산 속도뿐입니다.</p>`;
-    } else {
-      const parts = longer.map((r) => {
-        const d = r.length - best.length;
-        return k ? `${labelOf(r.method)}보다 ${fmtCm(d * k)}` : `${labelOf(r.method)}보다 ${fmt(d, 4)} (${((d / r.length) * 100).toFixed(1)}%)`;
-      });
-      const worst = longer[0].length - best.length;
-      const times100 = k ? ` 같은 작업을 100번 하면 ${fmtCm(worst * k * 100)}나 차이 납니다.` : "";
-      diff = `<p class="v-diff">${parts.join(", ")} 짧습니다.${times100}</p>`;
+    const failed = oks.filter((r) => !pool.includes(r));
+    const items = pool.map((r) => {
+      const d = r.length - best.length;
+      const top = d <= eps;
+      const tag = top ? (allSame ? "같음" : "가장 짧음") : `+${diffOf(d)}`;
+      return `<li${top ? ' class="is-best"' : ""}><span class="r-name">${labelOf(r.method)}</span><span class="r-len">${lenOf(r)}</span><span class="r-diff">${tag}</span></li>`;
+    });
+    for (const r of failed) {
+      items.push(`<li class="fail"><span class="r-name">${labelOf(r.method)}</span><span class="r-len">${lenOf(r)}</span><span class="r-diff">검사 실패</span></li>`);
     }
+    rank = `<p class="v-sub">방법별 원판 길이 (짧은 순)</p><ol class="v-rank">${items.join("")}</ol>`;
   }
+
+  const save =
+    k && many && !allSame
+      ? `<p class="v-diff">같은 작업을 100번 하면 ${labelOf(longest.method)} 배치보다 원판을 <b>${fmtCm((longest.length - best.length) * k * 100)}</b> 덜 씁니다.</p>`
+      : "";
 
   const bad = oks.filter((r) => !isValid(r));
   const check = bad.length
@@ -528,15 +566,15 @@ function renderVerdict() {
     : `<p class="v-check ok">겹친 조각도, 원판 밖으로 나간 조각도 없습니다. ` +
       `${oks.length > 1 ? `${oks.length}개 방법 모두 개수와 순서까지 확인했습니다.` : "개수와 순서도 맞습니다."}</p>`;
 
-  const pending = state.phase === "computing" ? `<p class="v-note">아직 계산 중인 방법이 있어서 결론이 바뀔 수 있습니다.</p>` : "";
+  const pending = state.phase === "computing" ? `<p class="v-note">아직 계산 중인 방법이 있어서 가장 짧은 배치가 바뀔 수 있습니다.</p>` : "";
   const actions =
-    `<div class="v-actions"><span>이 배치 내려받기${k ? " (실제 크기, mm)" : " (도면 단위)"}</span>` +
+    `<div class="v-actions"><span>${many && !allSame ? "가장 짧은 배치" : "이 배치"} 내려받기${k ? " (실제 크기, mm)" : " (도면 단위)"}</span>` +
     `<button type="button" class="quiet" data-act="svg" data-m="${best.method}">커터용 SVG</button>` +
     `<button type="button" class="quiet" data-act="dxf" data-m="${best.method}">DXF</button></div>`;
 
   el.verdict.innerHTML =
-    `<div class="v-head"><p class="v-label">필요한 원판 길이</p><p class="v-big">${big}</p><p class="v-basis">${basis}</p></div>` +
-    `<div class="v-body">${tape}${stats}${diff}${check}${pending}${actions}</div>`;
+    `<div class="v-head">${win}<p class="v-label">필요한 원판 길이</p><p class="v-big">${lenOf(best)}</p><p class="v-basis">${basis}</p></div>` +
+    `<div class="v-body">${tape}${stats}${rank}${save}${check}${pending}${actions}</div>`;
 }
 
 function renderHead(k) {
@@ -558,11 +596,10 @@ function renderTable() {
   const k = realScale();
   const ncol = renderHead(k);
   const oks = okResults();
-  const bestLen = Math.min(...oks.map((r) => r.length));
-  const distinctLen = oks.some((r) => r.length !== bestLen); // 길이가 서로 다를 때만 가장 짧은 값을 굵게
+  const win = shortestName(); // 길이가 서로 다를 때만 가장 짧은 행을 표시
   const maxTime = Math.max(...oks.map((r) => r.time_place_ms), 1e-9);
   const unit = state.inst.summary.unit ? ` ${state.inst.summary.unit}` : "";
-  el.tbody.innerHTML = state.selected
+  el.tbody.innerHTML = shortestFirst()
     .map((name) => {
       const r = state.results[name];
       const label = labelOf(name);
@@ -573,9 +610,10 @@ function renderTable() {
       const rest = ((r.time_place_ms - r.time_feasible_ms) / maxTime) * 100;
       const why = [...r.valid_errors, ...r.rule_errors].join("\n");
       const flag = isValid(r) ? "" : ` <span class="badge bad" title="${escapeHtml(why)}">검사 실패</span>`;
-      const best = distinctLen && r.length === bestLen ? "best" : "";
+      const best = name === win ? "best" : "";
+      const tag = best ? ` <span class="badge win">가장 짧음</span>` : "";
       return (
-        `<tr><td class="name">${label}${flag}</td>` +
+        `<tr${best ? ' class="best-row"' : ""}><td class="name">${label}${tag}${flag}</td>` +
         `<td class="${best}">${fmt(r.length, 6)}${unit}</td>` +
         (k ? `<td class="${best}">${fmtCm(r.length * k)}</td>` : "") +
         `<td>${(r.utilization * 100).toFixed(1)}%</td>` +
@@ -620,11 +658,12 @@ function renderStrips() {
   const scaleLength = Math.max(...oks.map((r) => r.length), s.lower_bound);
   el.stepOut.textContent = `${state.step} / ${s.pieces}개`;
   el.strips.innerHTML = "";
-  for (const name of state.selected) {
+  const win = shortestName();
+  for (const name of shortestFirst()) {
     const r = state.results[name];
     const label = labelOf(name);
     const card = document.createElement("article");
-    card.className = "strip";
+    card.className = name === win ? "strip best" : "strip";
     if (!r) {
       const txt = state.running === name ? "계산 중입니다." : state.phase === "computing" ? "앞 방법이 끝나기를 기다리고 있습니다." : "";
       card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">${txt}</p>`;
@@ -636,7 +675,7 @@ function renderStrips() {
       card.innerHTML = `<header><h4>${label}</h4></header><p class="msg err">${escapeHtml(r.message)}\n${escapeHtml(r.trace || "")}</p>`;
     } else {
       card.innerHTML =
-        `<header><h4>${label}</h4>` +
+        `<header><h4>${label}${name === win ? ` <span class="badge win">가장 짧음</span>` : ""}</h4>` +
         `<span class="nums">길이 ${fmt(r.length, 6)}${k ? ` (${fmtCm(r.length * k)})` : ""}, 사용률 ${(r.utilization * 100).toFixed(1)}%</span>` +
         `<span class="tools">` +
         `<button type="button" class="quiet" data-act="svg" data-m="${name}">커터용 SVG</button>` +
