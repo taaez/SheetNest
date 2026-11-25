@@ -35,6 +35,8 @@ const READY_TEXT = "준비 완료. 계산은 모두 이 브라우저 안에서 �
 const COUNTER_LABELS = {
   overlap_checks: ["정밀 겹침 판정", "회"],
   bbox_rejects: ["박스 단계 제외", "회"],
+  columns: ["살펴본 열", "개"],
+  lifts: ["겹침 풀기", "회"],
   nfp_computed: ["NFP 계산", "개"],
   nfp_cache_hits: ["NFP 재사용", "회"],
   candidate_evals: ["후보점 판정", "회"],
@@ -43,9 +45,9 @@ const COUNTER_LABELS = {
 };
 
 const METHOD_DESC = {
-  trig: "조각 모양 그대로, 변끼리 교차하는지 직접 계산합니다.",
+  trig: "원판을 일정 간격의 세로줄로 나눠, 줄마다 겹치지 않는 가장 낮은 자리를 변끼리 직접 계산합니다.",
   nfp: "두 조각이 맞닿는 경계(NFP)를 미리 만들어 점 하나로 판정합니다.",
-  raster: "원판을 작은 칸으로 나눠 칸끼리 비교합니다. 빠르지만 근사입니다.",
+  raster: "원판을 작은 칸으로 나눠 칸끼리 비교합니다. 빠르지만 칸 단위로 근사합니다.",
 };
 
 const GROUP_LABELS = { "실험 인스턴스": "보고서 실험 도면", "기타 벤치마크": "그 밖의 공개 도면" };

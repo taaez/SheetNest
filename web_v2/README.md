@@ -33,5 +33,6 @@ http://localhost:8000/v2/ 를 연다. 첫 화면은 http://localhost:8000/ 에 �
 ## 고칠 때
 
 - 이 폴더만 고친다. `web/`은 건드리지 않는다(`tests/test_web_bridge.py`가 두 화면이 각자 폴더 그대로 배포되는지 검사한다).
+- 삼각법과 래스터의 `rows`(원판 폭 ÷ 값 = 간격) 입력칸은 `web/bridge.py`의 `PARAMS`에서 오므로 두 화면에 함께 나온다.
 - 방법 설명 문장은 `app.js`의 `METHOD_DESC`, 오래 걸리는 도면 목록은 `SLOW`(모든 방법)와 `SLOW_METHOD`(특정 방법만)에 있다.
 - 멈추기는 Python 계산을 중간에 끊을 수 없어서 작업자(Web Worker)를 끝내고 새로 띄운 뒤 같은 도면을 다시 불러온다. 몇 초 걸린다.
