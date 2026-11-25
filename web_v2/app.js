@@ -54,8 +54,8 @@ const GROUP_LABELS = { "실험 인스턴스": "보고서 실험 도면", "기타
 
 // 꼭짓점이 150~1000개라 브라우저에서 몇 분 이상 걸리는 도면
 const SLOW = new Set(["gardeyn2", "gardeyn3", "gardeyn4", "gardeyn5", "gardeyn6", "gardeyn7", "gardeyn8", "gardeyn9"]);
-// 특정 방법만 오래 걸리는 도면 (2026-11 측정: gardeyn1의 NFP는 브라우저에서 10분 이상)
-const SLOW_METHOD = { gardeyn1: ["nfp"] };
+// 방법에 따라 오래 걸리는 도면과 브라우저에서 걸리는 대략의 시간 (2026-11-25 측정, rows 기본값)
+const SLOW_METHOD = { gardeyn1: { nfp: "10분 이상", trig: "약 2분" } };
 
 // 실제 원판 폭 단위 → cm
 const TO_CM = { mm: 0.1, cm: 1, m: 100, in: 2.54 };
@@ -159,8 +159,7 @@ function onReady({ methods, instances }) {
     for (const it of items) {
       const o = document.createElement("option");
       o.value = it.file;
-      const slowM = (SLOW_METHOD[it.name] || []).map((m) => `${labelOf(m)} 오래 걸림`).join(", ");
-      const bits = [it.pieces ? `조각 ${it.pieces}개` : "", SLOW.has(it.name) ? "오래 걸림" : slowM].filter(Boolean);
+      const bits = [it.pieces ? `조각 ${it.pieces}개` : "", SLOW.has(it.name) || SLOW_METHOD[it.name] ? "오래 걸림" : ""].filter(Boolean);
       o.textContent = bits.length ? `${it.name} (${bits.join(", ")})` : it.name;
       og.appendChild(o);
     }
@@ -219,7 +218,9 @@ function loadBuiltin(file) {
       ? "꼭짓점이 많은 도면이라 브라우저에서 몇 분 이상 걸릴 수 있습니다. 계산 중에 멈추기를 누르면 중단합니다."
       : "";
   const slowM = entry && SLOW_METHOD[entry.name]
-    ? `${SLOW_METHOD[entry.name].map(labelOf).join(", ")} 방법은 이 도면에서 브라우저로 10분 넘게 걸립니다. 빨리 보려면 그 방법의 선택을 끄세요.`
+    ? `이 도면은 브라우저에서 ${Object.entries(SLOW_METHOD[entry.name])
+        .map(([m, t]) => `${labelOf(m)} ${t}`)
+        .join(", ")}이 걸립니다. 빨리 보려면 그 방법의 선택을 끄세요.`
     : "";
   el.instanceNote.textContent = [note, slow, slowM]
     .filter(Boolean)
