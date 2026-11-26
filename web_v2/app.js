@@ -160,7 +160,9 @@ function onRunnerMessage(method, r, m) {
     renderResults();
   } else if (m.type === "result") {
     clearTimeout(r.timer);
-    finishMethod(method, m.result);
+    // 탭이 뒤에 있으면 브라우저가 타이머를 늦게 울릴 수 있다. 제한을 넘겨 끝난 결과는 시간 초과로 센다
+    const late = state.limitMs && m.result.status === "ok" && m.result.time_place_ms > state.limitMs;
+    finishMethod(method, late ? { method, status: "timeout" } : m.result);
   } else if (m.type === "error") {
     const text = friendly(m.text);
     if (m.during === "init") {
@@ -313,8 +315,8 @@ function loadBuiltin(file) {
       : "";
   const slowM = entry && SLOW_METHOD[entry.name]
     ? `이 도면은 브라우저에서 ${Object.entries(SLOW_METHOD[entry.name])
-        .map(([m, t]) => `${labelOf(m)} ${t}`)
-        .join(", ")}이 걸립니다. 빨리 보려면 그 방법의 체크를 끄면 됩니다.`
+        .map(([m, t]) => `${labelOf(m)}${josa(labelOf(m), "이", "가")} ${t}`)
+        .join(", ")} 걸립니다. 시간 제한보다 오래 걸리는 방법은 시간 초과로 표시됩니다.`
     : "";
   el.instanceNote.textContent = [note, slow, slowM]
     .filter(Boolean)
