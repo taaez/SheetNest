@@ -79,7 +79,13 @@ self.onmessage = async (ev) => {
       }
       post("done");
     } else if (m.type === "instanceJson") {
-      post("instanceJson", { text: bridge.current_instance_json() });
+      post("instanceJson", { text: bridge.current_instance_json(), purpose: m.purpose });
+    } else if (m.type === "loadJson") {
+      // 계산 전용 작업자: 화면 쪽 작업자가 읽어 둔 도면(팀 공통 JSON)을 그대로 받아 쓴다
+      const path = `${UPLOAD_DIR}/run_instance.json`;
+      pyodide.FS.writeFile(path, m.text);
+      bridge.load_path(path);
+      post("loaded");
     }
   } catch (e) {
     post("error", { during: m.type, text: cleanError(e) });

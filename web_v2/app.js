@@ -19,6 +19,7 @@ const el = {
   methods: $("methods"),
   run: $("run"),
   stop: $("stop"),
+  timeLimit: $("time-limit"),
   results: $("results"),
   verdict: $("verdict"),
   theadRow: $("thead-row"),
@@ -55,7 +56,7 @@ const GROUP_LABELS = { "실험 인스턴스": "보고서 실험 도면", "기타
 // 꼭짓점이 150~1000개라 브라우저에서 몇 분 이상 걸리는 도면
 const SLOW = new Set(["gardeyn2", "gardeyn3", "gardeyn4", "gardeyn5", "gardeyn6", "gardeyn7", "gardeyn8", "gardeyn9"]);
 // 방법에 따라 오래 걸리는 도면과 브라우저에서 걸리는 대략의 시간 (2026-11-25 측정, rows 기본값)
-const SLOW_METHOD = { gardeyn1: { nfp: "10분 이상", trig: "약 2분" } };
+const SLOW_METHOD = { gardeyn1: { nfp: "10분 이상", trig: "약 1분 30초" } };
 
 // 실제 원판 폭 단위 → cm
 const TO_CM = { mm: 0.1, cm: 1, m: 100, in: 2.54 };
@@ -75,7 +76,11 @@ const state = {
   autoReal: false, // 실제 폭 칸을 도면 단위에서 자동으로 채웠는지
   selected: [],
   results: {},
-  running: null,
+  running: new Set(), // 지금 계산 중인 방법들
+  runId: 0,
+  limitMs: null, // 시간 제한(ms). 없으면 null
+  limitText: "",
+  instText: null, // 계산 작업자에게 넘길 도면(팀 공통 JSON)
   step: 0,
   timer: null,
   clock: null,
@@ -98,17 +103,105 @@ function onMessage(ev) {
   if (m.type === "status") setEngine(m.text);
   else if (m.type === "ready") onReady(m);
   else if (m.type === "instance") onInstance(m.data);
+  else if (m.type === "instanceJson") {
+    if (m.purpose === "run") {
+      state.instText = m.text;
+      const waiting = instTextWaiters;
+      instTextWaiters = [];
+      for (const f of waiting) f(m.text);
+    } else download(`${state.inst.summary.name}_instance.json`, m.text, "application/json");
+  } else if (m.type === "error") onError(m);
+}
+
+// ---------------------------------------------------------------- 계산 작업자
+// 화면 쪽 작업자(worker)는 도면 읽기만 맡고, 계산은 방법마다 따로 띄운 작업자가 동시에 한다.
+// 시간 제한을 넘긴 방법은 그 작업자만 끝내면 되므로 다른 방법의 계산과 도면은 그대로 남는다.
+const runners = {};
+let instTextWaiters = [];
+
+function getInstanceText() {
+  if (state.instText) return Promise.resolve(state.instText);
+  return new Promise((resolve) => {
+    instTextWaiters.push(resolve);
+    if (instTextWaiters.length === 1) worker.postMessage({ type: "instanceJson", purpose: "run" });
+  });
+}
+
+function runner(method) {
+  if (runners[method]) return runners[method];
+  const w = new Worker("worker.js");
+  const r = { worker: w, on: {}, timer: null };
+  r.ready = new Promise((resolve, reject) => {
+    r.on.ready = resolve;
+    r.on.fail = reject;
+  });
+  w.onmessage = (ev) => onRunnerMessage(method, r, ev.data);
+  w.onerror = (e) => onRunnerMessage(method, r, { type: "error", during: "init", text: e.message || "계산을 시작하지 못했습니다" });
+  w.postMessage({ type: "init", pyodide: query.get("pyodide") || undefined });
+  runners[method] = r;
+  return r;
+}
+
+function dropRunner(method) {
+  const r = runners[method];
+  if (!r) return;
+  clearTimeout(r.timer);
+  r.worker.terminate();
+  delete runners[method];
+}
+
+function onRunnerMessage(method, r, m) {
+  if (m.type === "ready") r.on.ready();
+  else if (m.type === "loaded") r.on.loaded && r.on.loaded();
   else if (m.type === "running") {
-    state.running = m.method;
+    // 시간 제한은 작업자 준비와 도면 넣기를 빼고, 실제 계산을 시작한 때부터 잰다
+    state.running.add(method);
+    if (state.limitMs) r.timer = setTimeout(() => onTimeout(method), state.limitMs);
     renderResults();
   } else if (m.type === "result") {
-    state.results[m.result.method] = m.result;
-    state.running = null;
-    renderResults();
-  } else if (m.type === "done") onDone();
-  else if (m.type === "instanceJson") {
-    download(`${state.inst.summary.name}_instance.json`, m.text, "application/json");
-  } else if (m.type === "error") onError(m);
+    clearTimeout(r.timer);
+    finishMethod(method, m.result);
+  } else if (m.type === "error") {
+    const text = friendly(m.text);
+    if (m.during === "init") {
+      dropRunner(method);
+      r.on.fail(new Error(text));
+    } else {
+      clearTimeout(r.timer);
+      finishMethod(method, { method, status: "error", message: text });
+    }
+  }
+}
+
+async function launch(method, text, params, id) {
+  const live = () => id === state.runId && state.phase === "computing" && !state.results[method];
+  const r = runner(method);
+  try {
+    await r.ready;
+  } catch (e) {
+    if (live()) finishMethod(method, { method, status: "error", message: `계산을 시작하지 못했습니다: ${e.message}` });
+    return;
+  }
+  if (!live()) return;
+  await new Promise((resolve) => {
+    r.on.loaded = resolve;
+    r.worker.postMessage({ type: "loadJson", text });
+  });
+  if (!live()) return;
+  r.worker.postMessage({ type: "run", methods: [method], params: { [method]: params } });
+}
+
+function onTimeout(method) {
+  if (state.results[method] || state.phase !== "computing") return;
+  dropRunner(method);
+  finishMethod(method, { method, status: "timeout" });
+}
+
+function finishMethod(method, result) {
+  state.results[method] = result;
+  state.running.delete(method);
+  renderResults();
+  if (state.phase === "computing" && state.selected.every((n) => state.results[n])) onDone();
 }
 
 function setEngine(text, cls = "") {
@@ -299,6 +392,7 @@ el.uploadGo.addEventListener("click", async () => {
 
 function onInstance(data) {
   state.inst = data;
+  state.instText = null;
   if (state.restoring) {
     // 멈춘 뒤 새 실행 환경에 같은 도면을 다시 넣은 경우: 끝난 결과는 그대로 둔다
     state.restoring = false;
@@ -372,53 +466,58 @@ for (const input of [el.realWidth, el.realUnit]) {
 }
 
 // ---------------------------------------------------------------- 실행
-// 우선순위. 지금은 자재 절약 우선만 연다. 계산 속도 우선(speed)과 시간 제한(limit)은
-// 실험 3의 시간 예측(지표 → 방법별 예상 시간, 브라우저 배수 포함)이 들어오면 연다.
+// 우선순위. 자재 절약 우선은 시간 제한 없이, 시간 제한 안에서 자재 절약은 정한 시간까지만 돌린다.
+// 계산 속도 우선(speed)은 실행 전에 방법별 계산 시간을 예측해야 해서 예측 방식이 정해지면 연다.
+// 시간 제한 선택지(1초, 10초, 1분, 10분)는 실험 3의 제한 시간 T와 같다(experiments/README.md).
 function priority() {
   const c = document.querySelector('input[name="priority"]:checked');
-  return c ? c.value : "material";
+  return c ? c.value : "limit";
 }
 
-// 실행 순서: 래스터는 큰 도면에서도 몇 초면 끝나므로 먼저 돌려 첫 결과를 빨리 보여 준다.
-// 오래 걸리는 방법을 중간에 멈춰도 래스터 결과는 남는다.
-function runOrder(methods) {
-  return methods.includes("raster") ? ["raster", ...methods.filter((m) => m !== "raster")] : methods;
-}
+el.timeLimit.addEventListener("change", () => {
+  document.querySelector('input[name="priority"][value="limit"]').checked = true;
+});
 
 el.run.addEventListener("click", () => {
-  const methods = runOrder(checkedMethods());
-  if (!methods.length || !state.inst || state.phase !== "idle" || priority() !== "material") return;
+  const methods = checkedMethods();
+  const p = priority();
+  if (!methods.length || !state.inst || state.phase !== "idle" || p === "speed") return;
   stopPlay();
+  const id = ++state.runId;
   state.selected = methods;
   state.results = {};
-  state.running = null;
+  state.running = new Set();
+  state.limitMs = p === "limit" ? Number(el.timeLimit.value) : null;
+  state.limitText = p === "limit" ? el.timeLimit.selectedOptions[0].textContent : "";
   state.step = state.inst.summary.pieces;
   el.results.hidden = false;
   state.phase = "computing";
   startClock();
   setUi();
   renderResults();
-  worker.postMessage({ type: "run", methods, params: methodParams() });
+  const params = methodParams();
+  getInstanceText().then((text) => {
+    if (id !== state.runId || state.phase !== "computing") return;
+    for (const m of methods) launch(m, text, params[m] || {}, id);
+  });
 });
 
 el.stop.addEventListener("click", () => {
   if (state.phase !== "computing") return;
-  // Python 계산은 중간에 끊을 수 없어서 작업자를 통째로 끝내고 새로 띄운다
-  worker.terminate();
-  stopClock();
-  for (const n of state.selected) if (!state.results[n]) state.results[n] = { method: n, status: "stopped" };
-  state.running = null;
-  state.restoring = true;
-  state.phase = "restarting";
-  setUi();
-  renderResults();
-  setEngine("계산을 멈췄습니다. 다시 계산할 수 있게 준비하고 있습니다 (몇 초 걸립니다).");
-  startWorker();
+  // Python 계산은 중간에 끊을 수 없어서 아직 계산 중인 방법의 작업자를 통째로 끝낸다(다음 계산 때 새로 띄운다)
+  state.runId++;
+  for (const n of state.selected) {
+    if (state.results[n]) continue;
+    dropRunner(n);
+    state.results[n] = { method: n, status: "stopped" };
+  }
+  onDone();
+  setEngine("멈췄습니다. 끝난 방법의 결과는 그대로 두었으니 바로 다시 계산할 수 있습니다.", "ready");
 });
 
 function onDone() {
   stopClock();
-  state.running = null;
+  state.running = new Set();
   state.phase = "idle";
   setUi();
   renderResults();
@@ -441,9 +540,8 @@ function friendly(text) {
 
 function onError({ during, text: raw }) {
   const text = friendly(raw);
-  stopClock();
-  state.running = null;
   if (during === "init") {
+    stopClock();
     state.restoring = false;
     state.phase = "init";
     setEngine(`계산 준비를 하지 못했습니다. 인터넷 연결을 확인한 뒤 새로 고침하면 다시 준비합니다. (${text})`, "fail");
@@ -507,14 +605,23 @@ function shortestName() {
   return sorted[sorted.length - 1].length - sorted[0].length > eps ? sorted[0].method : null;
 }
 
+// 받침이 있으면 앞의 조사, 없으면 뒤의 조사. 한글이 아닌 끝(예: NFP)은 받침이 없는 것으로 본다
+function josa(word, withFinal, withoutFinal) {
+  const c = String(word).charCodeAt(String(word).length - 1);
+  return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 ? withFinal : withoutFinal;
+}
+
 function renderVerdict() {
   const s = state.inst.summary;
   const oks = okResults();
+  const timed = state.selected.filter((n) => state.results[n] && state.results[n].status === "timeout");
   if (!oks.length) {
     el.verdict.innerHTML =
       state.phase === "computing"
         ? `<p class="v-wait">계산 중입니다. 첫 결과가 나오면 여기에 가장 짧은 배치를 보여 드리겠습니다.</p>`
-        : `<p class="v-wait">보여 드릴 결과가 없습니다. 아래 표에서 이유를 확인할 수 있습니다.</p>`;
+        : timed.length
+          ? `<p class="v-wait">${state.limitText} 안에 끝난 방법이 없습니다. 시간 제한을 늘려서 다시 계산하면 됩니다.</p>`
+          : `<p class="v-wait">보여 드릴 결과가 없습니다. 아래 표에서 이유를 확인할 수 있습니다.</p>`;
     return;
   }
   const valid = oks.filter(isValid);
@@ -529,11 +636,14 @@ function renderVerdict() {
   const many = pool.length > 1;
   const longest = pool[pool.length - 1];
   const allSame = many && longest.length - best.length <= eps;
+  const within = timed.length ? `${state.limitText} 안에 끝난 방법 중 ` : "";
   const win = !many
-    ? `<p class="v-win"><b>${labelOf(best.method)}</b> 배치 결과입니다</p>`
+    ? timed.length
+      ? `<p class="v-win"><b>${labelOf(best.method)}</b> 배치만 ${state.limitText} 안에 끝났습니다</p>`
+      : `<p class="v-win"><b>${labelOf(best.method)}</b> 배치 결과입니다</p>`
     : allSame
-      ? `<p class="v-win">계산한 방법의 길이가 모두 같습니다</p>`
-      : `<p class="v-win"><b>${labelOf(best.method)}</b> 배치가 가장 짧습니다</p>`;
+      ? `<p class="v-win">${within}계산한 방법의 길이가 모두 같습니다</p>`
+      : `<p class="v-win"><b>${labelOf(best.method)}</b> 배치가 ${within}가장 짧습니다</p>`;
   const basis = k
     ? `실제 원판 폭 ${fmt(Number(el.realWidth.value), 6)} ${el.realUnit.value} 기준`
     : `원판 폭 ${fmt(s.width)}의 ${(best.length / s.width).toFixed(2)}배입니다. 실제 원판 폭을 적으면 m 단위로 바꿔 드립니다.`;
@@ -553,7 +663,7 @@ function renderVerdict() {
 
   // 방법별 길이를 짧은 순으로. 검사를 통과하지 못한 결과는 맨 뒤에 따로 표시
   let rank = "";
-  if (oks.length > 1) {
+  if (oks.length + timed.length > 1) {
     const failed = oks.filter((r) => !pool.includes(r));
     const items = pool.map((r) => {
       const d = r.length - best.length;
@@ -564,8 +674,21 @@ function renderVerdict() {
     for (const r of failed) {
       items.push(`<li class="fail"><span class="r-name">${labelOf(r.method)}</span><span class="r-len">${lenOf(r)}</span><span class="r-diff">검사 실패</span></li>`);
     }
+    for (const n of timed) {
+      items.push(`<li class="fail"><span class="r-name">${labelOf(n)}</span><span class="r-len">없음</span><span class="r-diff">시간 초과</span></li>`);
+    }
     rank = `<p class="v-sub">방법별 원판 길이 (짧은 순)</p><ol class="v-rank">${items.join("")}</ol>`;
   }
+
+  // NFP는 정확한 자리를 구해 대개 가장 짧지만 보장은 아니다. 다른 방법이 더 짧으면 그대로 알려 준다
+  const nfp = pool.find((r) => r.method === "nfp");
+  const notNfp =
+    nfp && best.method !== "nfp" && nfp.length - best.length > eps
+      ? `<p class="v-diff">보통은 NFP가 가장 짧지만, 이번에는 ${labelOf(best.method)}${josa(labelOf(best.method), "이", "가")} NFP보다 <b>${(((nfp.length - best.length) / nfp.length) * 100).toFixed(1)}%</b> 짧았습니다.</p>`
+      : "";
+  const timeoutNote = timed.length
+    ? `<p class="v-note">${timed.map(labelOf).join(", ")}${josa(labelOf(timed[timed.length - 1]), "은", "는")} ${state.limitText} 안에 끝나지 않아 후보에서 뺐습니다. 시간 제한을 늘리면 더 짧은 배치가 나올 수 있습니다.</p>`
+    : "";
 
   const save =
     k && many && !allSame
@@ -587,7 +710,7 @@ function renderVerdict() {
 
   el.verdict.innerHTML =
     `<div class="v-head">${win}<p class="v-label">필요한 원판 길이</p><p class="v-big">${lenOf(best)}</p><p class="v-basis">${basis}</p></div>` +
-    `<div class="v-body">${tape}${stats}${rank}${save}${check}${pending}${actions}</div>`;
+    `<div class="v-body">${tape}${stats}${rank}${notNfp}${save}${timeoutNote}${check}${pending}${actions}</div>`;
 }
 
 function renderHead(k) {
@@ -599,8 +722,9 @@ function renderHead(k) {
 }
 
 function statusText(name, r) {
-  if (!r) return state.running === name ? "계산 중" : state.phase === "computing" ? "기다리는 중" : "";
+  if (!r) return state.running.has(name) ? "계산 중" : state.phase === "computing" ? "계산 준비 중" : "";
   if (r.status === "stopped") return "멈춰서 계산하지 않았습니다";
+  if (r.status === "timeout") return `시간 초과: ${state.limitText} 안에 끝나지 않아 멈췄습니다`;
   if (r.status === "not_implemented") return "아직 만드는 중인 방법입니다";
   return `문제가 생겼습니다: ${escapeHtml(r.message)}`;
 }
@@ -678,8 +802,10 @@ function renderStrips() {
     const card = document.createElement("article");
     card.className = name === win ? "strip best" : "strip";
     if (!r) {
-      const txt = state.running === name ? "계산 중입니다." : state.phase === "computing" ? "앞 방법이 끝나기를 기다리고 있습니다." : "";
+      const txt = state.running.has(name) ? "계산 중입니다." : state.phase === "computing" ? "계산을 준비하고 있습니다." : "";
       card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">${txt}</p>`;
+    } else if (r.status === "timeout") {
+      card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">시간 초과: ${state.limitText} 안에 끝나지 않아 멈췄습니다.</p>`;
     } else if (r.status === "stopped") {
       card.innerHTML = `<header><h4>${label}</h4></header><p class="msg">멈춰서 계산하지 않았습니다.</p>`;
     } else if (r.status === "not_implemented") {
