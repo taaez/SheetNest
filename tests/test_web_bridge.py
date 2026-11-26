@@ -106,3 +106,19 @@ def test_build_site(tmp_path):
     exp = [e for e in idx if e["group"] == "실험 인스턴스"]
     assert [e["name"] for e in exp] == ["fu", "jakobs1", "shapes0", "shirts", "trousers", "swim", "gardeyn1"]
     assert all((site / e["file"]).exists() for e in idx)
+
+
+def test_build_site_v2(tmp_path):
+    """실무용 화면은 site/v2/에 따로 들어가고, 기존 화면(site/)은 web/ 그대로 남는다."""
+    site = tmp_path / "site"
+    build_web.build(site)
+    v2 = site / build_web.V2
+    for name in build_web.V2_STATIC:
+        assert (v2 / name).read_bytes() == (ROOT / "web_v2" / name).read_bytes(), name
+    for name in build_web.STATIC:
+        assert (site / name).read_bytes() == (ROOT / "web" / name).read_bytes(), name
+    assert not (site / "timing.js").exists()  # 기존 화면에는 새 파일을 넣지 않는다
+    assert (v2 / "py.zip").read_bytes() == (site / "py.zip").read_bytes()
+    idx = json.loads((v2 / "data/index.json").read_text(encoding="utf-8"))
+    assert idx == json.loads((site / "data/index.json").read_text(encoding="utf-8"))
+    assert all((v2 / e["file"]).exists() for e in idx)
