@@ -1,6 +1,7 @@
 // SheetNest 웹 화면 v2 (실무용). 계산은 worker.js(브라우저 안의 Python)가 하고, 이 파일은 화면만 맡는다.
 // 이전 화면(web/)과 계산 결과는 같고, 결론 카드, 실제 크기 환산, 멈추기를 더했다.
 import { cutSvg, download, dxf, fmt, partSvg, stripSvg } from "./export.js";
+import { TIMING } from "./timing.js";
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -18,6 +19,8 @@ const el = {
   realUnit: $("real-unit"),
   methods: $("methods"),
   run: $("run"),
+  runRec: $("run-rec"),
+  recommend: $("recommend"),
   stop: $("stop"),
   timeLimit: $("time-limit"),
   results: $("results"),
@@ -53,10 +56,6 @@ const METHOD_DESC = {
 
 const GROUP_LABELS = { "실험 인스턴스": "보고서 실험 도면", "기타 벤치마크": "그 밖의 공개 도면" };
 
-// 꼭짓점이 150~1000개라 브라우저에서 몇 분 이상 걸리는 도면
-const SLOW = new Set(["gardeyn2", "gardeyn3", "gardeyn4", "gardeyn5", "gardeyn6", "gardeyn7", "gardeyn8", "gardeyn9"]);
-// 방법에 따라 오래 걸리는 도면과 브라우저에서 걸리는 대략의 시간 (2026-11-25 측정, rows 기본값)
-const SLOW_METHOD = { gardeyn1: { nfp: "10분 이상", trig: "약 1분 30초" } };
 
 // 실제 원판 폭 단위 → cm
 const TO_CM = { mm: 0.1, cm: 1, m: 100, in: 2.54 };
@@ -78,6 +77,8 @@ const state = {
   results: {},
   running: new Set(), // 지금 계산 중인 방법들
   runId: 0,
+  runKind: "all", // rec: 추천 방법만, all: 고른 방법 모두
+  rec: null, // 계산을 시작할 때의 추천(결과와 견주어 보여 준다)
   limitMs: null, // 시간 제한(ms). 없으면 null
   limitText: "",
   instText: null, // 계산 작업자에게 넘길 도면(팀 공통 JSON)
@@ -102,7 +103,7 @@ function onMessage(ev) {
   const m = ev.data;
   if (m.type === "status") setEngine(m.text);
   else if (m.type === "ready") onReady(m);
-  else if (m.type === "instance") onInstance(m.data);
+  else if (m.type === "instance") onInstance(m.data, m.features);
   else if (m.type === "instanceJson") {
     if (m.purpose === "run") {
       state.instText = m.text;
@@ -215,8 +216,14 @@ function setEngine(text, cls = "") {
 function setUi() {
   const idle = state.phase === "idle";
   const computing = state.phase === "computing";
+  const clock = computing ? `계산 중 ${((performance.now() - state.t0) / 1000).toFixed(1)}초` : "";
+  const rec = idle && state.inst ? recommend() : null;
   el.run.disabled = !idle || !state.inst || !checkedMethods().length;
-  el.run.textContent = computing ? `계산 중 ${((performance.now() - state.t0) / 1000).toFixed(1)}초` : "배치 계산";
+  el.run.textContent = computing && state.runKind === "all" ? clock : "고른 방법 모두 계산해 비교";
+  el.runRec.disabled = !rec || !rec.method;
+  el.runRec.textContent =
+    computing && state.runKind === "rec" ? clock : rec && rec.method ? `추천 방법으로 계산 (${labelOf(rec.method)})` : "추천 방법으로 계산";
+  if (idle) renderRecommend(rec);
   el.stop.hidden = !computing;
   el.instance.disabled = !idle;
   el.uploadGo.disabled = !idle || !el.file.files.length;
@@ -255,7 +262,7 @@ function onReady({ methods, instances }) {
     for (const it of items) {
       const o = document.createElement("option");
       o.value = it.file;
-      const bits = [it.pieces ? `조각 ${it.pieces}개` : "", SLOW.has(it.name) || SLOW_METHOD[it.name] ? "오래 걸림" : ""].filter(Boolean);
+      const bits = [it.pieces ? `조각 ${it.pieces}개` : "", isSlow(it.name) ? "오래 걸림" : ""].filter(Boolean);
       o.textContent = bits.length ? `${it.name} (${bits.join(", ")})` : it.name;
       og.appendChild(o);
     }
@@ -275,7 +282,8 @@ function renderMethods() {
     box.innerHTML =
       `<label><input type="checkbox" id="${id}" value="${m.name}" ${m.implemented ? "checked" : "disabled"}>` +
       `${m.label}<span class="state">${stateText}</span></label>` +
-      (METHOD_DESC[m.name] ? `<p class="desc">${METHOD_DESC[m.name]}</p>` : "");
+      (METHOD_DESC[m.name] ? `<p class="desc">${METHOD_DESC[m.name]}</p>` : "") +
+      `<p class="eta" data-eta="${m.name}"></p>`;
     for (const p of m.params || []) {
       const row = document.createElement("div");
       row.className = "param";
@@ -289,6 +297,7 @@ function renderMethods() {
   }
 }
 el.methods.addEventListener("change", setUi);
+el.methods.addEventListener("input", setUi);
 
 function checkedMethods() {
   return [...el.methods.querySelectorAll('input[type="checkbox"]:checked')].map((c) => c.value);
@@ -309,16 +318,7 @@ const labelOf = (name) => (state.methods.find((m) => m.name === name) || {}).lab
 function loadBuiltin(file) {
   const entry = state.instances.find((i) => i.file === file);
   const note = entry && entry.note ? entry.note.replace(/^\d+\.\s*/, "") : "";
-  const slow =
-    entry && SLOW.has(entry.name)
-      ? "꼭짓점이 많은 도면이라 브라우저에서 몇 분 넘게 걸릴 수 있습니다. 계산 중에 멈추기를 누르면 바로 멈춥니다."
-      : "";
-  const slowM = entry && SLOW_METHOD[entry.name]
-    ? `이 도면은 브라우저에서 ${Object.entries(SLOW_METHOD[entry.name])
-        .map(([m, t]) => `${labelOf(m)}${josa(labelOf(m), "이", "가")} ${t}`)
-        .join(", ")} 걸립니다. 시간 제한보다 오래 걸리는 방법은 시간 초과로 표시됩니다.`
-    : "";
-  el.instanceNote.textContent = [note, slow, slowM]
+  el.instanceNote.textContent = [note]
     .filter(Boolean)
     .map((t) => (/[.!?]$/.test(t) ? t : `${t}.`))
     .join(" ");
@@ -392,8 +392,9 @@ el.uploadGo.addEventListener("click", async () => {
   loadUploaded({ kind: "upload", name: f.name, buffer, options });
 });
 
-function onInstance(data) {
+function onInstance(data, features) {
   state.inst = data;
+  state.inst.features = features || null;
   state.instText = null;
   if (state.restoring) {
     // 멈춘 뒤 새 실행 환경에 같은 도면을 다시 넣은 경우: 끝난 결과는 그대로 둔다
@@ -468,8 +469,123 @@ for (const input of [el.realWidth, el.realUnit]) {
 }
 
 // ---------------------------------------------------------------- 실행
+// ---------------------------------------------------------------- 계산 전 예상 시간과 추천
+// 길이는 예측식이 없다. 지금까지 잰 결과에서 NFP가 가장 짧은 경우가 대부분이었고(실제 도면 13개 중 12개, 복제 입력 27개 중 23개),
+// 예외는 대개 삼각법이어서, 시간 안에 끝날 것으로 예상되는 방법 중 NFP, 삼각법, 래스터 순으로 추천한다.
+const LENGTH_ORDER = ["nfp", "trig", "raster"];
+const MARGIN = { builtin: 1.3, upload: 3 }; // 예상 시간에 곱하는 여유. 올린 도면은 어림값이라 넉넉히 둔다
+
+const builtinName = () => (state.instances.find((i) => i.file === (state.source || {}).file) || {}).name;
+
+// 브라우저에서 걸릴 예상 시간(초). 알 수 없으면 undefined, 잰 상한(6분)을 넘겼으면 Infinity
+function expectedSeconds(method) {
+  if (!state.inst || !state.source) return undefined;
+  if ((methodParams()[method] || {}).rows) return undefined; // 설정값을 바꾸면 미리 잰 값과 달라진다
+  if (state.source.kind === "builtin") {
+    const row = TIMING.table[builtinName()];
+    if (!row || !(method in row)) return undefined;
+    return row[method] === null ? Infinity : row[method] * TIMING.factor;
+  }
+  const f = state.inst.features;
+  const k = TIMING.model[method];
+  if (!f || !k || !f.S) return undefined;
+  if (k.sOver && f.S >= k.sOver) return Infinity; // 이만큼 복잡한 도면은 실험 3에서 모두 10분을 넘겼다
+  const s = state.inst.summary;
+  return Math.exp(k.a + k.n * Math.log(s.pieces) + k.s * Math.log(f.S) + k.t * Math.log(s.types)) * TIMING.factor;
+}
+
+const tableLimitSeconds = () => Math.round((TIMING.capSeconds * TIMING.factor) / 60) * 60; // 표가 답할 수 있는 가장 긴 시간(약 10분)
+
+function isSlow(name) {
+  const row = TIMING.table[name];
+  return !!row && Object.values(row).some((s) => s === null || s * TIMING.factor > 60);
+}
+
+function etaText(t) {
+  if (t === undefined) return "";
+  if (t === Infinity) return `${Math.round(tableLimitSeconds() / 60)}분 이상`;
+  if (t < 1) return "1초 미만";
+  if (t < 60) return `약 ${t < 10 ? Number(t.toPrecision(2)) : Math.round(t)}초`;
+  const min = Math.floor(t / 60);
+  const sec = Math.round((t - min * 60) / 10) * 10;
+  return sec === 60 ? `약 ${min + 1}분` : sec ? `약 ${min}분 ${sec}초` : `약 ${min}분`;
+}
+
+function recommend() {
+  const p = priority();
+  const limit = p === "limit" ? Number(el.timeLimit.value) / 1000 : Infinity;
+  const limitText = p === "limit" ? el.timeLimit.selectedOptions[0].textContent : "";
+  const margin = MARGIN[(state.source || {}).kind] || MARGIN.upload;
+  const names = state.methods.filter((m) => m.implemented).map((m) => m.name);
+  const exp = Object.fromEntries(names.map((n) => [n, expectedSeconds(n)]));
+  const known = names.filter((n) => exp[n] !== undefined);
+  const fits = (n, lim = limit) => exp[n] !== undefined && exp[n] !== Infinity && exp[n] * margin <= lim;
+  let method = null;
+  if (p === "speed") {
+    method = known.filter((n) => exp[n] !== Infinity).sort((x, y) => exp[x] - exp[y])[0] || null;
+  } else {
+    method = LENGTH_ORDER.find((n) => names.includes(n) && fits(n)) || null;
+  }
+  return { p, limit, limitText, exp, names, known, method, fits };
+}
+
+function renderRecommend(rec) {
+  for (const node of el.methods.querySelectorAll("[data-eta]")) {
+    const n = node.dataset.eta;
+    const t = rec ? rec.exp[n] : undefined;
+    const over = rec && t !== undefined && rec.p !== "speed" && !rec.fits(n);
+    node.className = over ? "eta over" : "eta";
+    node.innerHTML = t === undefined ? "" : `예상 시간 <b>${etaText(t)}</b>${over ? (rec.p === "limit" ? " · 시간 초과 예상" : " · 얼마나 걸릴지 모름") : ""}`;
+  }
+  if (!rec) return;
+  el.recommend.hidden = false;
+  const src =
+    (state.source || {}).kind === "builtin"
+      ? "예상 시간은 이 도면을 미리 재어 둔 값으로 계산했습니다."
+      : "예상 시간은 조각 수와 모양 복잡도로 어림한 값이라 실제와 2~3배 다를 수 있습니다.";
+  if (!rec.known.length) {
+    el.recommend.innerHTML =
+      `<p class="r-head"><span>추천</span>없음</p>` +
+      `<p>${Object.keys(methodParams()).length ? "방법 설정값을 바꾸면 미리 잰 시간과 달라져서" : "이 도면은 예상 시간을 알 수 없어서"} 추천하지 않습니다. 고른 방법을 모두 계산해 비교하면 됩니다.</p>`;
+    return;
+  }
+  const L = (n) => labelOf(n);
+  const eta = (n) => etaText(rec.exp[n]);
+  let head = "";
+  let why = "";
+  if (rec.p === "speed") {
+    head = L(rec.method);
+    why = `가장 빨리 끝날 것으로 예상됩니다(${eta(rec.method)}).${rec.method === "nfp" ? "" : " 원판 길이는 NFP보다 길게 나올 수 있습니다."}`;
+  } else if (!rec.method) {
+    head = "없음";
+    why = `${rec.limitText} 안에 끝날 것으로 예상되는 방법이 없습니다. 시간 제한을 늘리면 추천할 수 있습니다.`;
+  } else {
+    head = L(rec.method);
+    const within = rec.p === "limit" ? `${rec.limitText} 안에 끝날 것으로 예상되고(${eta(rec.method)})` : `${eta(rec.method)} 걸릴 것으로 예상되고`;
+    const skipped = LENGTH_ORDER.slice(0, LENGTH_ORDER.indexOf(rec.method)).filter((n) => rec.names.includes(n));
+    const skipText = skipped.length
+      ? `${skipped.map((n) => `${L(n)}${josa(L(n), "은", "는")} ${rec.exp[n] === undefined ? "예상 시간을 몰라" : `${eta(n)} 걸릴 것으로 예상되어`}`).join(", ")} 뺐습니다. `
+      : "";
+    why =
+      rec.method === "nfp"
+        ? `${within}, 지금까지 잰 도면 대부분에서 NFP가 가장 짧았습니다.`
+        : `${skipText}${L(rec.method)}${josa(L(rec.method), "은", "는")} ${within}, 남은 방법 중에서는 대체로 가장 짧습니다.`;
+    // 시간 제한을 늘리면 더 앞 순서의 방법을 추천할 수 있는지
+    if (rec.p === "limit") {
+      for (const o of [...el.timeLimit.options].filter((o) => Number(o.value) / 1000 > rec.limit)) {
+        const better = LENGTH_ORDER.find((n) => rec.names.includes(n) && rec.fits(n, Number(o.value) / 1000));
+        if (better && better !== rec.method) {
+          why += ` 시간 제한을 ${o.textContent}으로 늘리면 ${L(better)}(${eta(better)})${josa(L(better), "을", "를")} 추천합니다.`;
+          break;
+        }
+      }
+    }
+  }
+  el.recommend.innerHTML = `<p class="r-head"><span>추천</span>${head}</p><p>${why}</p><p class="r-src">${src}</p>`;
+}
+
 // 우선순위. 자재 절약 우선은 시간 제한 없이, 시간 제한 안에서 자재 절약은 정한 시간까지만 돌린다.
-// 계산 속도 우선(speed)은 실행 전에 방법별 계산 시간을 예측해야 해서 예측 방식이 정해지면 연다.
+// 계산 속도 우선은 가장 빨리 끝날 것으로 예상되는 방법을 추천한다.
 // 시간 제한 선택지(1초, 10초, 1분, 10분)는 실험 3의 제한 시간 T와 같다(experiments/README.md).
 function priority() {
   const c = document.querySelector('input[name="priority"]:checked');
@@ -478,14 +594,23 @@ function priority() {
 
 el.timeLimit.addEventListener("change", () => {
   document.querySelector('input[name="priority"][value="limit"]').checked = true;
+  setUi();
+});
+$("priority").addEventListener("change", setUi);
+
+el.run.addEventListener("click", () => startRun(checkedMethods(), "all"));
+el.runRec.addEventListener("click", () => {
+  const rec = recommend();
+  if (rec.method) startRun([rec.method], "rec");
 });
 
-el.run.addEventListener("click", () => {
-  const methods = checkedMethods();
+function startRun(methods, kind) {
   const p = priority();
-  if (!methods.length || !state.inst || state.phase !== "idle" || p === "speed") return;
+  if (!methods.length || !state.inst || state.phase !== "idle") return;
   stopPlay();
   const id = ++state.runId;
+  state.runKind = kind;
+  state.rec = recommend();
   state.selected = methods;
   state.results = {};
   state.running = new Set();
@@ -502,7 +627,7 @@ el.run.addEventListener("click", () => {
     if (id !== state.runId || state.phase !== "computing") return;
     for (const m of methods) launch(m, text, params[m] || {}, id);
   });
-});
+}
 
 el.stop.addEventListener("click", () => {
   if (state.phase !== "computing") return;
@@ -622,7 +747,11 @@ function renderVerdict() {
       state.phase === "computing"
         ? `<p class="v-wait">계산 중입니다. 첫 결과가 나오면 여기에 가장 짧은 배치를 보여 드리겠습니다.</p>`
         : timed.length
-          ? `<p class="v-wait">${state.limitText} 안에 끝난 방법이 없습니다. 시간 제한을 늘려서 다시 계산하면 됩니다.</p>`
+          ? `<p class="v-wait">${
+              state.runKind === "rec" && state.rec && state.rec.method
+                ? `추천한 ${labelOf(state.rec.method)}${josa(labelOf(state.rec.method), "이", "가")} 예상(${etaText(state.rec.exp[state.rec.method])})과 달리 ${state.limitText} 안에 끝나지 않았습니다.`
+                : `${state.limitText} 안에 끝난 방법이 없습니다.`
+            } 시간 제한을 늘려서 다시 계산하면 됩니다.</p>`
           : `<p class="v-wait">보여 드릴 결과가 없습니다. 아래 표에서 이유를 확인할 수 있습니다.</p>`;
     return;
   }
@@ -682,12 +811,39 @@ function renderVerdict() {
     rank = `<p class="v-sub">방법별 원판 길이 (짧은 순)</p><ol class="v-rank">${items.join("")}</ol>`;
   }
 
-  // NFP는 정확한 자리를 구해 대개 가장 짧지만 보장은 아니다. 다른 방법이 더 짧으면 그대로 알려 준다
-  const nfp = pool.find((r) => r.method === "nfp");
-  const notNfp =
-    nfp && best.method !== "nfp" && nfp.length - best.length > eps
-      ? `<p class="v-diff">보통은 NFP가 가장 짧지만, 이번에는 ${labelOf(best.method)}${josa(labelOf(best.method), "이", "가")} NFP보다 <b>${(((nfp.length - best.length) / nfp.length) * 100).toFixed(1)}%</b> 짧았습니다.</p>`
-      : "";
+  // 계산 전 추천과 실제 결과를 견준다. 다르면 그대로 알려 준다
+  const rec = state.rec;
+  const pct = (longer) => (((longer.length - best.length) / longer.length) * 100).toFixed(1);
+  let recNote = "";
+  if (state.runKind === "rec") {
+    recNote = `<p class="v-note">추천 방법만 계산했습니다. 추천이 맞는지 확인하려면 "고른 방법 모두 계산해 비교"를 누르면 됩니다.</p>`;
+  } else if (state.phase !== "computing" && rec && rec.method && state.selected.length > 1 && state.selected.includes(rec.method)) {
+    const R = labelOf(rec.method);
+    const rr = state.results[rec.method];
+    if (rr.status === "timeout") {
+      recNote = `<p class="v-diff">추천한 ${R}${josa(R, "은", "는")} 예상(${etaText(rec.exp[rec.method])})과 달리 ${state.limitText} 안에 끝나지 않았습니다.</p>`;
+    } else if (rr.status === "ok" && rec.p === "speed") {
+      const fastest = [...pool].sort((x, y) => x.time_place_ms - y.time_place_ms)[0];
+      const F = labelOf(fastest.method);
+      recNote =
+        fastest.method === rec.method
+          ? `<p class="v-note">가장 빠를 것으로 추천한 ${R}${josa(R, "이", "가")} 실제로도 가장 빨랐습니다.</p>`
+          : `<p class="v-diff">추천은 ${R}${josa(R, "이었", "였")}지만, 실제로는 ${F}${josa(F, "이", "가")} 가장 빨랐습니다.</p>`;
+    } else if (rr.status === "ok") {
+      const B = labelOf(best.method);
+      recNote =
+        rr.length - best.length <= eps
+          ? `<p class="v-note">추천한 ${R}${josa(R, "이", "가")} 실제로도 가장 짧았습니다.</p>`
+          : `<p class="v-diff">추천은 ${R}${josa(R, "이었", "였")}지만, 이번에는 ${B}${josa(B, "이", "가")} ${R}보다 <b>${pct(rr)}%</b> 짧았습니다.</p>`;
+    }
+  } else if (state.phase !== "computing") {
+    // 추천이 없을 때(예상 시간을 모름): NFP가 대개 가장 짧다는 사실과 다르면 알려 준다
+    const nfp = pool.find((r) => r.method === "nfp");
+    if (nfp && nfp.length - best.length > eps) {
+      const B = labelOf(best.method);
+      recNote = `<p class="v-diff">보통은 NFP가 가장 짧지만, 이번에는 ${B}${josa(B, "이", "가")} NFP보다 <b>${pct(nfp)}%</b> 짧았습니다.</p>`;
+    }
+  }
   const timeoutNote = timed.length
     ? `<p class="v-note">${timed.map(labelOf).join(", ")}${josa(labelOf(timed[timed.length - 1]), "은", "는")} ${state.limitText} 안에 끝나지 않아 후보에서 뺐습니다. 시간 제한을 늘리면 더 짧은 배치가 나올 수 있습니다.</p>`
     : "";
@@ -712,7 +868,7 @@ function renderVerdict() {
 
   el.verdict.innerHTML =
     `<div class="v-head">${win}<p class="v-label">필요한 원판 길이</p><p class="v-big">${lenOf(best)}</p><p class="v-basis">${basis}</p></div>` +
-    `<div class="v-body">${tape}${stats}${rank}${notNfp}${save}${timeoutNote}${check}${pending}${actions}</div>`;
+    `<div class="v-body">${tape}${stats}${rank}${recNote}${save}${timeoutNote}${check}${pending}${actions}</div>`;
 }
 
 function renderHead(k) {

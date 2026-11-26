@@ -113,9 +113,11 @@ def test_build_site_v2(tmp_path):
     site = tmp_path / "site"
     build_web.build(site)
     v2 = site / build_web.V2
-    for name in build_web.STATIC:
+    for name in build_web.V2_STATIC:
         assert (v2 / name).read_bytes() == (ROOT / "web_v2" / name).read_bytes(), name
+    for name in build_web.STATIC:
         assert (site / name).read_bytes() == (ROOT / "web" / name).read_bytes(), name
+    assert not (site / "timing.js").exists()  # 기존 화면에는 새 파일을 넣지 않는다
     assert (v2 / "py.zip").read_bytes() == (site / "py.zip").read_bytes()
     idx = json.loads((v2 / "data/index.json").read_text(encoding="utf-8"))
     assert idx == json.loads((site / "data/index.json").read_text(encoding="utf-8"))

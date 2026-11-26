@@ -225,3 +225,15 @@ tr.best-row td { background: #fbf4dc; }
 .limit-row { margin: 8px 0 0 27px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--steel); }
 .limit-row select { width: auto; min-width: 96px; }
 .field-label { margin: 0 0 6px; font-size: 14px; color: var(--steel); }
+
+/* 계산 전 추천 */
+.recommend { margin: 0 0 4px; padding: 12px 14px; border: 1px solid var(--mat); border-radius: 4px; background: #eef5f4; }
+.recommend .r-head { margin: 0; font-size: 18px; font-weight: 700; }
+.recommend .r-head span { font-weight: 500; color: var(--steel); font-size: 14px; margin-right: 6px; }
+.recommend p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; }
+.recommend .r-src { color: var(--steel); }
+.compare-label { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+button.wide { flex: 1; padding: 11px 18px; font-weight: 600; }
+.method .eta { margin: 4px 0 0 27px; font-size: 14px; color: var(--steel); font-variant-numeric: tabular-nums; }
+.method .eta.over { color: var(--bad); }
+.method .eta b { font-weight: 600; color: var(--ink); }

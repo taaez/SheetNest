@@ -62,6 +62,22 @@ async function loadUpload(name, buffer, options) {
   return JSON.parse(bridge.load_upload_path(path, JSON.stringify(options || {})));
 }
 
+// 올린 도면의 계산 시간을 미리 어림하는 데 쓰는 모양 특징. S는 종류별 볼록 조각 수의 합(NFP 계산량을 좌우한다).
+function shapeFeatures() {
+  try {
+    return JSON.parse(
+      pyodide.runPython(
+        "import json, bridge\n" +
+          "from algorithms.nfp.geometry_nfp import convex_decompose\n" +
+          "_i = bridge._require()\n" +
+          "json.dumps({'S': sum(len(convex_decompose([(p[0], p[1]) for p in it.polygon])) for it in _i.items)})"
+      )
+    );
+  } catch (e) {
+    return null;
+  }
+}
+
 self.onmessage = async (ev) => {
   const m = ev.data;
   try {
@@ -70,7 +86,8 @@ self.onmessage = async (ev) => {
     } else if (m.type === "loadBuiltin") {
       post("instance", { data: await loadBuiltin(m.file), origin: m.file });
     } else if (m.type === "loadUpload") {
-      post("instance", { data: await loadUpload(m.name, m.buffer, m.options), origin: m.name });
+      const data = await loadUpload(m.name, m.buffer, m.options);
+      post("instance", { data, origin: m.name, features: shapeFeatures() });
     } else if (m.type === "run") {
       for (const name of m.methods) {
         post("running", { method: name });

@@ -24,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ["index.html", "app.js", "export.js", "worker.js", "style.css"]
 V2 = "v2"  # 실무용 화면이 들어갈 하위 폴더 (원본 web_v2/)
+V2_STATIC = [*STATIC, "timing.js"]  # 실무용 화면에만 있는 파일: 계산 전 예상 시간표
 PY_DIRS = ["nesting", "algorithms"]
 
 
@@ -105,7 +106,7 @@ def build_v2(site: Path) -> None:
     """web_v2/ 화면을 site/v2/에 넣는다. 계산 코드와 인스턴스는 site/의 것을 그대로 복사한다."""
     out = site / V2
     out.mkdir()
-    for name in STATIC:
+    for name in V2_STATIC:
         shutil.copyfile(ROOT / "web_v2" / name, out / name)
     shutil.copyfile(site / "py.zip", out / "py.zip")
     shutil.copytree(site / "data", out / "data")
